@@ -1,25 +1,33 @@
-import type React from "react"
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { DashboardNav } from "@/components/dashboard-nav"
+import type React from "react";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { DashboardNav } from "@/components/dashboard-nav";
+import { headers } from "next/headers";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
-  const { data, error } = await supabase.auth.getUser()
+  const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) {
-    redirect("/auth/login")
+    redirect("/auth/login");
   }
 
   // Get user profile to check role
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", data.user.id).single()
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", data.user.id)
+    .single();
 
   if (!profile) {
-    redirect("/auth/login")
+    redirect("/auth/login");
   }
 
   return (
@@ -27,5 +35,5 @@ export default async function DashboardLayout({
       <DashboardNav user={data.user} profile={profile} />
       <main className="flex-1 p-6">{children}</main>
     </div>
-  )
+  );
 }

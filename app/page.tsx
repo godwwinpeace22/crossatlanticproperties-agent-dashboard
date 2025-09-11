@@ -1,6 +1,12 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -8,12 +14,15 @@ export default function HomePage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold">MLM Dashboard</CardTitle>
-            <CardDescription>Multi-Level Marketing Management Platform</CardDescription>
+            <CardTitle className="text-3xl font-bold">
+              Agent Dashboard
+            </CardTitle>
+            {/* <CardDescription></CardDescription> */}
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground text-center">
-              Manage your property sales, track commissions, and grow your agent network.
+              Manage your property sales, track commissions, and grow your agent
+              network.
             </p>
             <div className="flex flex-col gap-2">
               <Button asChild>
@@ -27,5 +36,5 @@ export default function HomePage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

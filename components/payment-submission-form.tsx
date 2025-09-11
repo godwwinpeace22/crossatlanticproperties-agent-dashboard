@@ -1,60 +1,71 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PaymentSubmissionFormProps {
   properties: Array<{
-    id: string
-    name: string
-    price: string
-  }>
+    id: string;
+    name: string;
+    price: string;
+  }>;
   agents: Array<{
-    id: string
-    email: string
-    full_name: string | null
-  }>
+    id: string;
+    email: string;
+    full_name: string | null;
+  }>;
 }
 
-export function PaymentSubmissionForm({ properties, agents }: PaymentSubmissionFormProps) {
+export function PaymentSubmissionForm({
+  properties,
+  agents,
+}: PaymentSubmissionFormProps) {
   const [formData, setFormData] = useState({
     property_id: "",
     buyer_email: "",
     buyer_name: "",
     amount: "",
     notes: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
-  const supabase = createClient()
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
 
-  const selectedProperty = properties.find((p) => p.id === formData.property_id)
+  const selectedProperty = properties.find(
+    (p) => p.id === formData.property_id
+  );
 
   const handleAgentSelect = (agentId: string) => {
-    const agent = agents.find((a) => a.id === agentId)
+    const agent = agents.find((a) => a.id === agentId);
     if (agent) {
       setFormData({
         ...formData,
         buyer_email: agent.email,
         buyer_name: agent.full_name || agent.email,
-      })
+      });
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
     try {
       // Verify the buyer exists in the system
@@ -62,10 +73,12 @@ export function PaymentSubmissionForm({ properties, agents }: PaymentSubmissionF
         .from("profiles")
         .select("id")
         .eq("email", formData.buyer_email)
-        .single()
+        .single();
 
       if (!buyerProfile) {
-        throw new Error("Buyer must have an account in the system. Please ask them to sign up first.")
+        throw new Error(
+          "Buyer must have an account in the system. Please ask them to sign up first."
+        );
       }
 
       const submissionData = {
@@ -74,19 +87,22 @@ export function PaymentSubmissionForm({ properties, agents }: PaymentSubmissionF
         buyer_name: formData.buyer_name,
         amount: Number.parseFloat(formData.amount),
         notes: formData.notes || null,
-      }
+        submitter_id: (await supabase.auth.getUser()).data.user?.id,
+      };
 
-      const { error } = await supabase.from("payment_submissions").insert([submissionData])
+      const { error } = await supabase
+        .from("payment_submissions")
+        .insert([submissionData]);
 
-      if (error) throw error
+      if (error) throw error;
 
-      router.push("/dashboard/submissions")
+      router.push("/dashboard/submissions");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Card className="max-w-2xl">
@@ -100,12 +116,12 @@ export function PaymentSubmissionForm({ properties, agents }: PaymentSubmissionF
             <Select
               value={formData.property_id}
               onValueChange={(value) => {
-                const property = properties.find((p) => p.id === value)
+                const property = properties.find((p) => p.id === value);
                 setFormData({
                   ...formData,
                   property_id: value,
                   amount: property?.price || "",
-                })
+                });
               }}
             >
               <SelectTrigger>
@@ -145,7 +161,9 @@ export function PaymentSubmissionForm({ properties, agents }: PaymentSubmissionF
                 type="email"
                 required
                 value={formData.buyer_email}
-                onChange={(e) => setFormData({ ...formData, buyer_email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, buyer_email: e.target.value })
+                }
                 placeholder="buyer@example.com"
               />
             </div>
@@ -156,7 +174,9 @@ export function PaymentSubmissionForm({ properties, agents }: PaymentSubmissionF
                 id="buyer_name"
                 required
                 value={formData.buyer_name}
-                onChange={(e) => setFormData({ ...formData, buyer_name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, buyer_name: e.target.value })
+                }
                 placeholder="John Doe"
               />
             </div>
@@ -170,7 +190,9 @@ export function PaymentSubmissionForm({ properties, agents }: PaymentSubmissionF
               step="0.01"
               required
               value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, amount: e.target.value })
+              }
               placeholder={selectedProperty ? selectedProperty.price : "0.00"}
             />
           </div>
@@ -180,7 +202,9 @@ export function PaymentSubmissionForm({ properties, agents }: PaymentSubmissionF
             <Textarea
               id="notes"
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
               placeholder="Additional details about the payment..."
               rows={3}
             />
@@ -192,12 +216,16 @@ export function PaymentSubmissionForm({ properties, agents }: PaymentSubmissionF
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Submitting..." : "Submit Payment"}
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.back()}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+            >
               Cancel
             </Button>
           </div>
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
