@@ -24,19 +24,71 @@ export default async function AdminAgentsPage() {
   }
 
   // Get all agents with their statistics
-  const { data: agents } = await supabase
+  const { data: agents, error: agentsError } = await supabase
     .from("profiles")
-    .select(
-      `
-      *,
-      downlines:agent_hierarchy!agent_hierarchy_upline_id_fkey(count),
-      commissions:commissions(amount),
-      submissions:payment_submissions(count)
-    `
-    )
+    .select("*")
     .order("created_at", { ascending: false });
 
-  // console.log({ agents });
+  if (agentsError) {
+    console.error("Error fetching agents:", agentsError);
+  }
+
+  // If we have agents, try to get their stats, otherwise use empty stats
+  let agentsWithStats = agents || [];
+
+  if (agents && agents.length > 0) {
+    try {
+      agentsWithStats = await Promise.all(
+        agents.map(async (agent) => {
+          try {
+            const [
+              { count: downlineCount },
+              { data: commissions },
+              { count: submissionCount },
+            ] = await Promise.all([
+              supabase
+                .from("agent_hierarchy")
+                .select("*", { count: "exact", head: true })
+                .eq("upline_id", agent.id),
+              supabase
+                .from("commissions")
+                .select("amount")
+                .eq("agent_id", agent.id),
+              supabase
+                .from("payment_submissions")
+                .select("*", { count: "exact", head: true })
+                .eq("submitter_id", agent.id),
+            ]);
+
+            return {
+              ...agent,
+              downlines: [{ count: downlineCount || 0 }],
+              commissions: commissions || [],
+              submissions: [{ count: submissionCount || 0 }],
+            };
+          } catch (error) {
+            console.error(`Error fetching stats for agent ${agent.id}:`, error);
+            // Return agent with empty stats if individual queries fail
+            return {
+              ...agent,
+              downlines: [{ count: 0 }],
+              commissions: [],
+              submissions: [{ count: 0 }],
+            };
+          }
+        })
+      );
+    } catch (error) {
+      console.error("Error fetching agent stats:", error);
+      // Use basic agent data without stats if stats queries fail
+      agentsWithStats = agents.map((agent) => ({
+        ...agent,
+        downlines: [{ count: 0 }],
+        commissions: [],
+        submissions: [{ count: 0 }],
+      }));
+    }
+  }
 
   // Get system statistics
   const [
@@ -120,7 +172,7 @@ export default async function AdminAgentsPage() {
       </div>
 
       {/* Agent Management Component */}
-      <AgentManagement agents={agents || []} />
+      <AgentManagement agents={agentsWithStats || []} />
     </div>
   );
 }

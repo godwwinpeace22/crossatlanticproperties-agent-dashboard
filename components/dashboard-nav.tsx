@@ -16,6 +16,7 @@ import {
   Network,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface DashboardNavProps {
   user: any;
@@ -68,8 +69,8 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
   ];
 
   return (
-    <Card className="w-64 min-h-screen rounded-none border-r">
-      <div className="p-6">
+    <Card className="w-64 min-h-screen rounded-none border-r flex flex-col">
+      <div className="p-6 flex-1 flex flex-col">
         <div className="mb-8">
           <h1 className="uppercase text-xs">Crossatlanticproperties</h1>
           <h2 className="text-xl font-bold">MLM Dashboard</h2>
@@ -81,7 +82,7 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
           </p>
         </div>
 
-        <nav className="space-y-2">
+        <nav className="space-y-2 flex-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -103,7 +104,7 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
           })}
         </nav>
 
-        <div className="mt-8">
+        <div className="mt-auto space-y-3">
           <Button
             variant="outline"
             className="w-full justify-start bg-transparent cursor-pointer"
@@ -112,6 +113,11 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
           </Button>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Theme</span>
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </Card>

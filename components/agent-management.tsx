@@ -1,102 +1,127 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, UserCheck, UserX, DollarSign, Users } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Search, UserCheck, UserX, DollarSign, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Agent {
-  id: string
-  email: string
-  full_name: string | null
-  role: string
-  status: string
-  created_at: string
-  downlines: Array<{ count: number }>
-  commissions: Array<{ amount: string }>
-  submissions: Array<{ count: number }>
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  status: string;
+  created_at: string;
+  downlines: Array<{ count: number }>;
+  commissions: Array<{ amount: string }>;
+  submissions: Array<{ count: number }>;
 }
 
 interface AgentManagementProps {
-  agents: Agent[]
+  agents: Agent[];
 }
 
 export function AgentManagement({ agents }: AgentManagementProps) {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [roleFilter, setRoleFilter] = useState("all")
-  const [isLoading, setIsLoading] = useState<string | null>(null)
-  const router = useRouter()
-  const supabase = createClient()
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
 
   const filteredAgents = agents.filter((agent) => {
     const matchesSearch =
       agent.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      agent.email.toLowerCase().includes(searchTerm.toLowerCase())
+      agent.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || agent.status === statusFilter
-    const matchesRole = roleFilter === "all" || agent.role === roleFilter
+    const matchesStatus =
+      statusFilter === "all" || agent.status === statusFilter;
+    const matchesRole = roleFilter === "all" || agent.role === roleFilter;
 
-    return matchesSearch && matchesStatus && matchesRole
-  })
+    return matchesSearch && matchesStatus && matchesRole;
+  });
 
   const handleStatusChange = async (agentId: string, newStatus: string) => {
-    setIsLoading(agentId)
+    setIsLoading(agentId);
 
     try {
-      const { error } = await supabase.from("profiles").update({ status: newStatus }).eq("id", agentId)
+      const { error } = await supabase
+        .from("profiles")
+        .update({ status: newStatus })
+        .eq("id", agentId);
 
-      if (error) throw error
+      if (error) throw error;
 
-      router.refresh()
+      router.refresh();
     } catch (error) {
-      console.error("Error updating agent status:", error)
-      alert("Failed to update agent status")
+      console.error("Error updating agent status:", error);
+      alert("Failed to update agent status");
     } finally {
-      setIsLoading(null)
+      setIsLoading(null);
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "default"
+        return "default";
       case "inactive":
-        return "secondary"
+        return "secondary";
       case "suspended":
-        return "destructive"
+        return "destructive";
       default:
-        return "secondary"
+        return "secondary";
     }
-  }
+  };
 
   const getRoleColor = (role: string) => {
-    return role === "admin" ? "destructive" : "outline"
-  }
+    return role === "admin" ? "destructive" : "outline";
+  };
 
   const calculateTotalEarnings = (commissions: Array<{ amount: string }>) => {
-    return commissions.reduce((sum, c) => sum + Number(c.amount), 0)
-  }
+    return commissions.reduce((sum, c) => sum + Number(c.amount), 0);
+  };
 
   const getDownlineCount = (downlines: Array<{ count: number }>) => {
-    return downlines.length > 0 ? downlines[0].count : 0
-  }
+    return downlines.length > 0 ? downlines[0].count : 0;
+  };
 
   const getSubmissionCount = (submissions: Array<{ count: number }>) => {
-    return submissions.length > 0 ? submissions[0].count : 0
-  }
+    return submissions.length > 0 ? submissions[0].count : 0;
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>All Agents</CardTitle>
-        <CardDescription>Manage agent accounts, monitor performance, and update statuses</CardDescription>
+        <CardDescription>
+          Manage agent accounts, monitor performance, and update statuses
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {/* Filters */}
@@ -152,7 +177,10 @@ export function AgentManagement({ agents }: AgentManagementProps) {
             <TableBody>
               {filteredAgents.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No agents found matching your criteria
                   </TableCell>
                 </TableRow>
@@ -161,22 +189,33 @@ export function AgentManagement({ agents }: AgentManagementProps) {
                   <TableRow key={agent.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{agent.full_name || "No name"}</div>
-                        <div className="text-sm text-muted-foreground">{agent.email}</div>
+                        <div className="font-medium">
+                          {agent.full_name || "No name"}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {agent.email}
+                        </div>
                         <div className="text-xs text-muted-foreground">
-                          Joined {new Date(agent.created_at).toLocaleDateString()}
+                          Joined{" "}
+                          {new Date(agent.created_at).toLocaleDateString()}
                         </div>
                       </div>
                     </TableCell>
 
                     <TableCell>
-                      <Badge variant={getRoleColor(agent.role)} className="capitalize">
+                      <Badge
+                        variant={getRoleColor(agent.role)}
+                        className="capitalize"
+                      >
                         {agent.role}
                       </Badge>
                     </TableCell>
 
                     <TableCell>
-                      <Badge variant={getStatusColor(agent.status)} className="capitalize">
+                      <Badge
+                        variant={getStatusColor(agent.status)}
+                        className="capitalize"
+                      >
                         {agent.status}
                       </Badge>
                     </TableCell>
@@ -188,7 +227,9 @@ export function AgentManagement({ agents }: AgentManagementProps) {
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-center">{getSubmissionCount(agent.submissions)}</TableCell>
+                    <TableCell className="text-center">
+                      {getSubmissionCount(agent.submissions)}
+                    </TableCell>
 
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end">
@@ -203,7 +244,9 @@ export function AgentManagement({ agents }: AgentManagementProps) {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleStatusChange(agent.id, "suspended")}
+                            onClick={() =>
+                              handleStatusChange(agent.id, "suspended")
+                            }
                             disabled={isLoading === agent.id}
                           >
                             <UserX className="h-3 w-3" />
@@ -212,7 +255,9 @@ export function AgentManagement({ agents }: AgentManagementProps) {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleStatusChange(agent.id, "active")}
+                            onClick={() =>
+                              handleStatusChange(agent.id, "active")
+                            }
                             disabled={isLoading === agent.id}
                           >
                             <UserCheck className="h-3 w-3" />
@@ -233,5 +278,5 @@ export function AgentManagement({ agents }: AgentManagementProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
