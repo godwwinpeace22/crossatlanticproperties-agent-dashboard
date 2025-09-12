@@ -1,69 +1,95 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Percent, Save, Plus, Trash2 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Percent, Save, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommissionSetting {
-  id: string
-  level: number
-  percentage: string
+  id: string;
+  level: number;
+  percentage: string;
 }
 
 interface CommissionSettingsProps {
-  settings: CommissionSetting[]
+  settings: CommissionSetting[];
 }
 
 export function CommissionSettings({ settings }: CommissionSettingsProps) {
-  const [editingSettings, setEditingSettings] = useState<{ [key: string]: string }>({})
-  const [newLevel, setNewLevel] = useState("")
-  const [newPercentage, setNewPercentage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+  const [editingSettings, setEditingSettings] = useState<{
+    [key: string]: string;
+  }>({});
+  const [newLevel, setNewLevel] = useState("");
+  const [newPercentage, setNewPercentage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
+  const { toast } = useToast();
 
   const handlePercentageChange = (settingId: string, value: string) => {
-    setEditingSettings({ ...editingSettings, [settingId]: value })
-  }
+    setEditingSettings({ ...editingSettings, [settingId]: value });
+  };
 
   const handleSave = async (settingId: string) => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      const newPercentage = editingSettings[settingId]
-      if (!newPercentage) return
+      const newPercentage = editingSettings[settingId];
+      if (!newPercentage) return;
 
       const { error } = await supabase
         .from("commission_settings")
         .update({ percentage: Number.parseFloat(newPercentage) })
-        .eq("id", settingId)
+        .eq("id", settingId);
 
-      if (error) throw error
+      if (error) throw error;
 
       // Clear editing state
-      const newEditingSettings = { ...editingSettings }
-      delete newEditingSettings[settingId]
-      setEditingSettings(newEditingSettings)
+      const newEditingSettings = { ...editingSettings };
+      delete newEditingSettings[settingId];
+      setEditingSettings(newEditingSettings);
 
-      router.refresh()
+      toast({
+        title: "Success",
+        description: `Commission percentage updated to ${newPercentage}%`,
+      });
+
+      router.refresh();
     } catch (error) {
-      console.error("Error updating commission setting:", error)
-      alert("Failed to update commission setting")
+      console.error("Error updating commission setting:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update commission setting",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleAddLevel = async () => {
-    if (!newLevel || !newPercentage) return
+    if (!newLevel || !newPercentage) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       const { error } = await supabase.from("commission_settings").insert([
@@ -71,45 +97,65 @@ export function CommissionSettings({ settings }: CommissionSettingsProps) {
           level: Number.parseInt(newLevel),
           percentage: Number.parseFloat(newPercentage),
         },
-      ])
+      ]);
 
-      if (error) throw error
+      if (error) throw error;
 
-      setNewLevel("")
-      setNewPercentage("")
-      router.refresh()
+      setNewLevel("");
+      setNewPercentage("");
+
+      toast({
+        title: "Success",
+        description: `Commission level ${newLevel} added successfully with ${newPercentage}% commission rate`,
+      });
+
+      router.refresh();
     } catch (error) {
-      console.error("Error adding commission level:", error)
-      alert("Failed to add commission level")
+      console.error("Error adding commission level:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add commission level",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleDelete = async (settingId: string) => {
-    if (!confirm("Are you sure you want to delete this commission level?")) return
+    if (!confirm("Are you sure you want to delete this commission level?"))
+      return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      const { error } = await supabase.from("commission_settings").delete().eq("id", settingId)
+      const { error } = await supabase
+        .from("commission_settings")
+        .delete()
+        .eq("id", settingId);
 
-      if (error) throw error
+      if (error) throw error;
 
-      router.refresh()
+      router.refresh();
     } catch (error) {
-      console.error("Error deleting commission setting:", error)
-      alert("Failed to delete commission setting")
+      console.error("Error deleting commission setting:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete commission setting",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Commission Settings</CardTitle>
-        <CardDescription>Configure commission percentages for each level in the MLM hierarchy</CardDescription>
+        <CardDescription>
+          Configure commission percentages for each level in the MLM hierarchy
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -127,7 +173,9 @@ export function CommissionSettings({ settings }: CommissionSettingsProps) {
               <TableBody>
                 {settings.map((setting) => (
                   <TableRow key={setting.id}>
-                    <TableCell className="font-medium">Level {setting.level}</TableCell>
+                    <TableCell className="font-medium">
+                      Level {setting.level}
+                    </TableCell>
 
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -138,7 +186,9 @@ export function CommissionSettings({ settings }: CommissionSettingsProps) {
                             min="0"
                             max="100"
                             value={editingSettings[setting.id]}
-                            onChange={(e) => handlePercentageChange(setting.id, e.target.value)}
+                            onChange={(e) =>
+                              handlePercentageChange(setting.id, e.target.value)
+                            }
                             className="w-20"
                           />
                         ) : (
@@ -173,9 +223,11 @@ export function CommissionSettings({ settings }: CommissionSettingsProps) {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const newEditingSettings = { ...editingSettings }
-                                delete newEditingSettings[setting.id]
-                                setEditingSettings(newEditingSettings)
+                                const newEditingSettings = {
+                                  ...editingSettings,
+                                };
+                                delete newEditingSettings[setting.id];
+                                setEditingSettings(newEditingSettings);
                               }}
                             >
                               Cancel
@@ -186,7 +238,12 @@ export function CommissionSettings({ settings }: CommissionSettingsProps) {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handlePercentageChange(setting.id, setting.percentage)}
+                              onClick={() =>
+                                handlePercentageChange(
+                                  setting.id,
+                                  setting.percentage
+                                )
+                              }
                             >
                               Edit
                             </Button>
@@ -211,7 +268,9 @@ export function CommissionSettings({ settings }: CommissionSettingsProps) {
           {/* Add New Level */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Add New Commission Level</CardTitle>
+              <CardTitle className="text-lg">
+                Add New Commission Level
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex gap-4 items-end">
@@ -243,7 +302,10 @@ export function CommissionSettings({ settings }: CommissionSettingsProps) {
                   />
                 </div>
 
-                <Button onClick={handleAddLevel} disabled={!newLevel || !newPercentage || isLoading}>
+                <Button
+                  onClick={handleAddLevel}
+                  disabled={!newLevel || !newPercentage || isLoading}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Level
                 </Button>
@@ -253,16 +315,26 @@ export function CommissionSettings({ settings }: CommissionSettingsProps) {
 
           {/* Commission Structure Info */}
           <div className="p-4 bg-muted rounded-lg">
-            <h4 className="font-semibold mb-2">How Commission Calculation Works</h4>
+            <h4 className="font-semibold mb-2">
+              How Commission Calculation Works
+            </h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• When a payment is approved, commissions are calculated for all uplines</li>
-              <li>• Each level receives the specified percentage of the sale amount</li>
-              <li>• Commissions are created as individual records for transparency</li>
+              <li>
+                • When a payment is approved, commissions are calculated for all
+                uplines
+              </li>
+              <li>
+                • Each level receives the specified percentage of the sale
+                amount
+              </li>
+              <li>
+                • Commissions are created as individual records for transparency
+              </li>
               <li>• Changes to commission rates only affect future sales</li>
             </ul>
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

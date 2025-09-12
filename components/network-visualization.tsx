@@ -1,208 +1,197 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
-import { Network } from "vis-network"
-import { DataSet } from "vis-data"
+import { useEffect, useRef } from "react";
+import { Network } from "vis-network";
+import { DataSet } from "vis-data";
+import { createClient } from "@/lib/supabase/client"; // 👈 client-side supabase
 
 interface NetworkVisualizationProps {
   currentUser: {
-    id: string
-    full_name: string | null
-    email: string
-  } | null
+    id: string;
+    full_name: string | null;
+    email: string;
+  } | null;
   upline: {
-    upline_id: string
+    upline_id: string;
     upline: {
-      id: string
-      full_name: string | null
-      email: string
-    }
-  } | null
+      id: string;
+      full_name: string | null;
+      email: string;
+    };
+  } | null;
   downlines: Array<{
-    agent_id: string
+    agent_id: string;
     agent: {
-      id: string
-      full_name: string | null
-      email: string
-    }
-  }>
+      id: string;
+      full_name: string | null;
+      email: string;
+    };
+  }>;
 }
 
-export function NetworkVisualization({ currentUser, upline, downlines }: NetworkVisualizationProps) {
-  const networkRef = useRef<HTMLDivElement>(null)
-  const networkInstance = useRef<Network | null>(null)
+export function NetworkVisualization({
+  currentUser,
+  upline,
+  downlines,
+}: NetworkVisualizationProps) {
+  const networkRef = useRef<HTMLDivElement>(null);
+  const networkInstance = useRef<Network | null>(null);
+  const nodes = useRef(new DataSet<any>([]));
+  const edges = useRef(new DataSet<any>([]));
+
+  // helper: add downlines for a parent node
+  function addDownlines(parentId: string, children: any[]) {
+    children.forEach((child) => {
+      if (!nodes.current.get(child.agent.id)) {
+        nodes.current.add({
+          id: child.agent.id,
+          label: child.agent.full_name || child.agent.email,
+          color: {
+            background: "#f59e0b",
+            border: "#d97706",
+            highlight: {
+              background: "#d97706",
+              border: "#b45309",
+            },
+          },
+          font: { color: "white", size: 12, face: "arial" },
+          shape: "circle",
+          size: 20,
+          borderWidth: 2,
+        });
+      }
+
+      if (!edges.current.get({ from: parentId, to: child.agent.id })) {
+        edges.current.add({
+          from: parentId,
+          to: child.agent.id,
+          arrows: "to",
+          color: { color: "#f59e0b", highlight: "#d97706" },
+          width: 2,
+          smooth: { type: "continuous" },
+        });
+      }
+    });
+  }
 
   useEffect(() => {
-    if (!networkRef.current || !currentUser) return
+    if (!networkRef.current || !currentUser) return;
 
-    // Create nodes
-    const nodes = new DataSet([])
-    const edges = new DataSet([])
+    // Reset datasets
+    nodes.current.clear();
+    edges.current.clear();
 
-    // Add current user node (center)
-    nodes.add({
+    // Add current user
+    nodes.current.add({
       id: currentUser.id,
       label: currentUser.full_name || currentUser.email,
       color: {
         background: "#3b82f6",
         border: "#1d4ed8",
-        highlight: {
-          background: "#2563eb",
-          border: "#1e40af",
-        },
+        highlight: { background: "#2563eb", border: "#1e40af" },
       },
       font: { color: "white", size: 14, face: "arial" },
       shape: "circle",
       size: 30,
       borderWidth: 3,
-    })
+    });
 
-    // Add upline node if exists
+    // Add upline
     if (upline?.upline) {
-      nodes.add({
+      nodes.current.add({
         id: upline.upline.id,
         label: upline.upline.full_name || upline.upline.email,
         color: {
           background: "#10b981",
           border: "#059669",
-          highlight: {
-            background: "#059669",
-            border: "#047857",
-          },
+          highlight: { background: "#059669", border: "#047857" },
         },
         font: { color: "white", size: 12, face: "arial" },
         shape: "circle",
         size: 25,
         borderWidth: 2,
-      })
+      });
 
-      // Add edge from upline to current user
-      edges.add({
+      edges.current.add({
         from: upline.upline.id,
         to: currentUser.id,
         arrows: "to",
         color: { color: "#10b981", highlight: "#059669" },
         width: 2,
         smooth: { type: "continuous" },
-      })
+      });
     }
 
-    // Add downline nodes
-    downlines.forEach((downline) => {
-      nodes.add({
-        id: downline.agent.id,
-        label: downline.agent.full_name || downline.agent.email,
-        color: {
-          background: "#f59e0b",
-          border: "#d97706",
-          highlight: {
-            background: "#d97706",
-            border: "#b45309",
-          },
-        },
-        font: { color: "white", size: 12, face: "arial" },
-        shape: "circle",
-        size: 20,
-        borderWidth: 2,
-      })
+    // Add initial downlines
+    addDownlines(currentUser.id, downlines);
 
-      // Add edge from current user to downline
-      edges.add({
-        from: currentUser.id,
-        to: downline.agent.id,
-        arrows: "to",
-        color: { color: "#f59e0b", highlight: "#d97706" },
-        width: 2,
-        smooth: { type: "continuous" },
-      })
-    })
-
-    // Network options
+    // Create network
+    const data = { nodes: nodes.current, edges: edges.current };
     const options = {
       layout: {
         hierarchical: {
           enabled: true,
-          direction: "UD", // Up-Down
+          direction: "UD",
           sortMethod: "directed",
           nodeSpacing: 150,
           levelSeparation: 200,
           treeSpacing: 200,
         },
       },
-      physics: {
-        enabled: false,
-      },
+      physics: { enabled: false },
       interaction: {
         dragNodes: true,
         dragView: true,
         zoomView: true,
         selectConnectedEdges: false,
       },
-      nodes: {
-        borderWidth: 2,
-        shadow: {
-          enabled: true,
-          color: "rgba(0,0,0,0.2)",
-          size: 10,
-          x: 2,
-          y: 2,
-        },
-      },
-      edges: {
-        shadow: {
-          enabled: true,
-          color: "rgba(0,0,0,0.1)",
-          size: 5,
-          x: 1,
-          y: 1,
-        },
-      },
-    }
+    };
 
-    // Create network
-    const data = { nodes, edges }
-    networkInstance.current = new Network(networkRef.current, data, options)
+    networkInstance.current = new Network(networkRef.current, data, options);
 
-    // Add click event listener
-    networkInstance.current.on("click", (params) => {
+    // Handle clicks → fetch children dynamically
+    networkInstance.current.on("click", async (params) => {
+      console.log("on click node");
       if (params.nodes.length > 0) {
-        const nodeId = params.nodes[0]
-        console.log("Clicked node:", nodeId)
-        // You can add more interaction logic here
-      }
-    })
+        const nodeId = params.nodes[0];
+        const supabase = createClient();
 
-    // Cleanup function
-    return () => {
-      if (networkInstance.current) {
-        networkInstance.current.destroy()
-        networkInstance.current = null
+        // Fetch children for clicked node
+        const { data: childDownlines, error } = await supabase
+          .from("agent_hierarchy")
+          .select("agent_id, agent:agent_id(id, full_name, email)")
+          .eq("upline_id", nodeId)
+          .eq("approved", true);
+
+        console.log({ childDownlines, error });
+
+        if (error) {
+          console.error("Error fetching downlines:", error.message);
+          return;
+        }
+
+        if (childDownlines && childDownlines.length > 0) {
+          addDownlines(nodeId, childDownlines);
+          networkInstance.current?.setData({
+            nodes: nodes.current,
+            edges: edges.current,
+          });
+        }
       }
-    }
-  }, [currentUser, upline, downlines])
+    });
+
+    return () => {
+      networkInstance.current?.destroy();
+      networkInstance.current = null;
+    };
+  }, [currentUser, upline, downlines]);
 
   if (!currentUser) {
     return (
       <div className="flex items-center justify-center h-96 text-muted-foreground">
         <p>Unable to load network data</p>
       </div>
-    )
-  }
-
-  if (!upline && (!downlines || downlines.length === 0)) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
-        <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mb-4">
-          {currentUser.full_name?.[0] || currentUser.email[0]}
-        </div>
-        <h3 className="text-lg font-semibold mb-2">You're at the root!</h3>
-        <p className="text-center">
-          You don't have any uplines or downlines yet.
-          <br />
-          Start building your network by getting referrals.
-        </p>
-      </div>
-    )
+    );
   }
 
   return (
@@ -222,13 +211,12 @@ export function NetworkVisualization({ currentUser, upline, downlines }: Network
             <span>Downlines</span>
           </div>
         </div>
-        <p>Click and drag to explore your network</p>
+        <p>Click a node to load deeper levels</p>
       </div>
       <div
         ref={networkRef}
         className="w-full h-96 border rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800"
-        style={{ minHeight: "400px" }}
       />
     </div>
-  )
+  );
 }

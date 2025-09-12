@@ -43,12 +43,14 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Dashboard" },
-    { href: "/dashboard/properties", icon: Building2, label: "Properties" },
-    { href: "/dashboard/network", icon: Network, label: "My Network" },
-    { href: "/dashboard/commissions", icon: DollarSign, label: "Commissions" },
-    { href: "/dashboard/submissions", icon: FileText, label: "Submissions" },
+
     ...(isAdmin
       ? [
+          {
+            href: "/dashboard/admin/listings",
+            icon: Building2,
+            label: "Properties",
+          },
           {
             href: "/dashboard/admin/agents",
             icon: Users,
@@ -65,15 +67,29 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
             label: "Settings",
           },
         ]
-      : []),
+      : [
+          { href: "/dashboard/network", icon: Network, label: "My Network" },
+          {
+            href: "/dashboard/commissions",
+            icon: DollarSign,
+            label: "Commissions",
+          },
+          {
+            href: "/dashboard/submissions",
+            icon: FileText,
+            label: "Submissions",
+          },
+        ]),
   ];
 
   return (
-    <Card className="w-64 min-h-screen rounded-none border-r flex flex-col">
+    <Card className="w-64 min-h-screen max-h-screen sticky top-0 rounded-none border-r flex flex-col overflow-y-auto">
       <div className="p-6 flex-1 flex flex-col">
         <div className="mb-8">
           <h1 className="uppercase text-xs">Crossatlanticproperties</h1>
-          <h2 className="text-xl font-bold">MLM Dashboard</h2>
+          <Link href="/dashboard">
+            <h2 className="text-xl font-bold">MLM Dashboard</h2>
+          </Link>
           <p className="text-sm text-muted-foreground">
             {profile.full_name || profile.email}
           </p>

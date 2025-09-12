@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -115,11 +115,96 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-@layer base {
+/* @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
   }
+} */
+
+/* @import "tailwindcss"; */
+
+/* Light theme tokens */
+
+/* Dark theme tokens */
+
+/* Base resets */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Utility & component classes */
+.glass-effect {
+  @apply bg-white/10 backdrop-blur-md border border-white/20;
+}
+
+/* .gradient-text {
+  @apply bg-gradient-to-r from-dnx-blue to-dnx-orange bg-clip-text text-transparent;
+} */
+
+.hero-gradient {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #f97316 100%);
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-2;
+}
+
+/* .btn-primary {
+  @apply text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105;
+} */
+
+.btn-secondary {
+  @apply text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105;
+}
+
+.section-padding {
+  @apply py-16 md:py-24 lg:py-32;
+}
+
+.container-custom {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* .skeleton {
+  @apply animate-skeleton bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%];
+} */
+
+.focus-ring {
+  @apply focus:outline-none focus:ring-2  focus:ring-offset-2 focus:ring-offset-white;
+}
+
+.form-input {
+  @apply w-full px-4 py-3 rounded-xl border border-gray-200  transition-all duration-300;
+}
+
+.form-select {
+  @apply w-full px-4 py-3 rounded-xl border border-gray-200  transition-all duration-300 bg-white;
+}
+
+/* Navigation enhancements */
+.nav-link {
+  @apply relative px-4 py-2 rounded-lg transition-all duration-300;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .section-padding {
+    @apply py-12;
+  }
+
+  .container-custom {
+    @apply px-4;
+  }
+}
+
+.text-muted-foreground {
+  @apply text-gray-500;
+}
+
+.text-dnx-blue {
+  color: #1e40af;
 }

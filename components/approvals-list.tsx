@@ -13,7 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Check, X, DollarSign, User, Calendar } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Check, X, DollarSign, User, Calendar, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Submission {
@@ -41,7 +49,9 @@ interface ApprovalsListProps {
 
 export function ApprovalsList({ submissions }: ApprovalsListProps) {
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [reviewNotes, setReviewNotes] = useState<{ [key: string]: string }>({});
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -50,6 +60,9 @@ export function ApprovalsList({ submissions }: ApprovalsListProps) {
     action: "approved" | "rejected"
   ) => {
     setProcessingId(submissionId);
+    setIsLoading(true);
+
+    console.log({ submissionId });
 
     try {
       const submission = submissions.find((s) => s.id === submissionId);
@@ -101,7 +114,10 @@ export function ApprovalsList({ submissions }: ApprovalsListProps) {
           .select()
           .single();
 
-        if (purchaseError) throw purchaseError;
+        if (purchaseError) {
+          setIsLoading(false);
+          throw purchaseError;
+        }
 
         // Create agent hierarchy relationship
         const { error: hierarchyError } = await supabase
@@ -116,7 +132,10 @@ export function ApprovalsList({ submissions }: ApprovalsListProps) {
             },
           ]);
 
-        if (hierarchyError) throw hierarchyError;
+        if (hierarchyError) {
+          setIsLoading(false);
+          throw hierarchyError;
+        }
 
         // Calculate and create commissions
         await calculateCommissions(
@@ -132,6 +151,7 @@ export function ApprovalsList({ submissions }: ApprovalsListProps) {
       alert(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setProcessingId(null);
+      setIsLoading(false);
     }
   };
 
@@ -230,144 +250,230 @@ export function ApprovalsList({ submissions }: ApprovalsListProps) {
   return (
     <div className="space-y-6">
       {pendingSubmissions.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">
-            Pending Approvals ({pendingSubmissions.length})
-          </h2>
-          <div className="space-y-4">
-            {pendingSubmissions.map((submission) => (
-              <Card key={submission.id} className="border-orange-200">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {submission.properties.name}
-                      </CardTitle>
-                      <CardDescription>
-                        Submitted by:{" "}
-                        {submission.submitter.full_name ||
-                          submission.submitter.email}
-                      </CardDescription>
-                    </div>
-                    <Badge variant="secondary">Pending Review</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="flex items-center">
-                      <User className="mr-2 h-4 w-4 text-blue-600" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Buyer</p>
-                        <p className="font-semibold">{submission.buyer_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {submission.buyer_email}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <DollarSign className="mr-2 h-4 w-4 text-green-600" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Amount</p>
-                        <p className="font-semibold">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Pending Approvals ({pendingSubmissions.length})
+            </CardTitle>
+            <CardDescription>
+              Review and approve payment submissions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Buyer</TableHead>
+                    <TableHead>Submitter</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingSubmissions.map((submission) => (
+                    <>
+                      <TableRow key={submission.id}>
+                        <TableCell className="font-medium">
+                          {submission.properties.name}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">
+                              {submission.buyer_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {submission.buyer_email}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {submission.submitter.full_name ||
+                            submission.submitter.email}
+                        </TableCell>
+                        <TableCell className="font-semibold">
                           ${Number(submission.amount).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <Calendar className="mr-2 h-4 w-4 text-purple-600" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Submitted
-                        </p>
-                        <p className="font-semibold">
+                        </TableCell>
+                        <TableCell>
                           {new Date(submission.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">Pending Review</Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="cursor-pointer"
+                              onClick={() =>
+                                setExpandedRow(
+                                  expandedRow === submission.id
+                                    ? null
+                                    : submission.id
+                                )
+                              }
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                handleApproval(submission.id, "approved")
+                              }
+                              disabled={
+                                isLoading && processingId === submission.id
+                              }
+                              className="bg-green-600 hover:bg-green-700 cursor-pointer"
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="cursor-pointer"
+                              onClick={() =>
+                                handleApproval(submission.id, "rejected")
+                              }
+                              disabled={
+                                isLoading && processingId === submission.id
+                              }
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {expandedRow === submission.id && (
+                        <TableRow>
+                          <TableCell colSpan={7} className="bg-muted/50">
+                            <div className="p-4 space-y-4">
+                              {submission.notes && (
+                                <div className="p-3 bg-background rounded-md">
+                                  <p className="text-sm text-muted-foreground mb-1">
+                                    Submission Notes:
+                                  </p>
+                                  <p className="text-sm">{submission.notes}</p>
+                                </div>
+                              )}
 
-                  {submission.notes && (
-                    <div className="p-3 bg-muted rounded-md">
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Submission Notes:
-                      </p>
-                      <p className="text-sm">{submission.notes}</p>
-                    </div>
-                  )}
+                              <div className="space-y-2">
+                                <Label htmlFor={`notes-${submission.id}`}>
+                                  Review Notes (Optional)
+                                </Label>
+                                <Textarea
+                                  id={`notes-${submission.id}`}
+                                  value={reviewNotes[submission.id] || ""}
+                                  onChange={(e) =>
+                                    setReviewNotes({
+                                      ...reviewNotes,
+                                      [submission.id]: e.target.value,
+                                    })
+                                  }
+                                  placeholder="Add notes about your decision..."
+                                  rows={2}
+                                />
+                              </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`notes-${submission.id}`}>
-                      Review Notes (Optional)
-                    </Label>
-                    <Textarea
-                      id={`notes-${submission.id}`}
-                      value={reviewNotes[submission.id] || ""}
-                      onChange={(e) =>
-                        setReviewNotes({
-                          ...reviewNotes,
-                          [submission.id]: e.target.value,
-                        })
-                      }
-                      placeholder="Add notes about your decision..."
-                      rows={2}
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleApproval(submission.id, "approved")}
-                      disabled={processingId === submission.id}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Check className="mr-2 h-4 w-4" />
-                      {processingId === submission.id
-                        ? "Processing..."
-                        : "Approve"}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleApproval(submission.id, "rejected")}
-                      disabled={processingId === submission.id}
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Reject
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() =>
+                                    handleApproval(submission.id, "approved")
+                                  }
+                                  disabled={
+                                    isLoading && processingId === submission.id
+                                  }
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <Check className="mr-2 h-4 w-4" />
+                                  {processingId === submission.id
+                                    ? "Processing..."
+                                    : "Approve"}
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  onClick={() =>
+                                    handleApproval(submission.id, "rejected")
+                                  }
+                                  disabled={
+                                    isLoading && processingId === submission.id
+                                  }
+                                >
+                                  <X className="mr-2 h-4 w-4" />
+                                  Reject
+                                </Button>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {processedSubmissions.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Recent Decisions</h2>
-          <div className="space-y-4">
-            {processedSubmissions.slice(0, 10).map((submission) => (
-              <Card key={submission.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Decisions</CardTitle>
+            <CardDescription>Previously processed submissions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Buyer</TableHead>
+                    <TableHead>Submitter</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {processedSubmissions.slice(0, 10).map((submission) => (
+                    <TableRow key={submission.id}>
+                      <TableCell className="font-medium">
                         {submission.properties.name}
-                      </CardTitle>
-                      <CardDescription>
-                        {submission.buyer_name} - $
-                        {Number(submission.amount).toLocaleString()}
-                      </CardDescription>
-                    </div>
-                    <Badge variant={getStatusColor(submission.status)}>
-                      {submission.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{submission.buyer_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {submission.buyer_email}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {submission.submitter.full_name ||
+                          submission.submitter.email}
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        ${Number(submission.amount).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(submission.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusColor(submission.status)}>
+                          {submission.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {submissions.length === 0 && (
