@@ -23,10 +23,11 @@ import {
 } from "@/components/ui/select";
 
 const heroImages = [
-  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2053&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=2070&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
+  "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
+  "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
+  "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3",
 ];
 
 const stats = [
@@ -130,61 +131,91 @@ export default function EnhancedHeroSection() {
 
           {/* Search Bar */}
           <div
-            className="max-w-4xl mx-auto animate-slide-in-left"
+            className="max-w-5xl mx-auto animate-slide-in-left"
             style={{ animationDelay: "0.3s" }}
           >
-            <div className="glass-effect rounded-2xl p-6 md:p-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <Select value={listingType} onValueChange={setListingType}>
-                  <SelectTrigger className="form-select text-gray-900">
-                    <SelectValue placeholder="Buy/Rent" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="buy">Buy</SelectItem>
-                    <SelectItem value="rent">Rent</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="glass-effect rounded-3xl p-4 md:p-6">
+              {/* Search Form */}
+              <div className="flex flex-col lg:flex-row gap-3 lg:gap-2">
+                {/* Listing Type */}
+                <div className="lg:w-32">
+                  <Select value={listingType} onValueChange={setListingType}>
+                    <SelectTrigger className="form-select text-gray-900 h-12 border-0 bg-white/90 hover:bg-white focus:bg-white">
+                      <SelectValue placeholder="Buy/Rent" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="buy">Buy</SelectItem>
+                      <SelectItem value="rent">Rent</SelectItem>
+                      <SelectItem value="commercial">Commercial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="form-select text-gray-900">
-                    <SelectValue placeholder="Property Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any Type</SelectItem>
-                    <SelectItem value="house">House</SelectItem>
-                    <SelectItem value="apartment">Apartment</SelectItem>
-                    <SelectItem value="villa">Villa</SelectItem>
-                    <SelectItem value="land">Land</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Property Type */}
+                <div className="lg:w-40">
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger className="form-select text-gray-900 h-12 border-0 bg-white/90 hover:bg-white focus:bg-white">
+                      <SelectValue placeholder="Property Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Any Type</SelectItem>
+                      <SelectItem value="house">House</SelectItem>
+                      <SelectItem value="apartment">Apartment</SelectItem>
+                      <SelectItem value="villa">Villa</SelectItem>
+                      <SelectItem value="land">Land</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <div className="md:col-span-2 relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                {/* Location Search */}
+                <div className="flex-1 relative">
+                  <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
                   <Input
                     type="text"
-                    placeholder="Location or Property ID"
+                    placeholder="Enter location, city, or property ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="form-input pl-10 text-gray-900"
+                    className="form-input pl-12 pr-4 h-12 text-gray-900 border-0 bg-white/90 hover:bg-white focus:bg-white placeholder:text-gray-500"
                   />
                 </div>
+
+                {/* Search Button */}
+                <Button
+                  onClick={handleSearch}
+                  className="bg-orange-500 hover:bg-orange-600 text-white h-12 px-8 rounded-xl font-semibold transition-all duration-200 hover:scale-105 lg:w-auto w-full"
+                >
+                  <Search className="mr-2 h-5 w-5" />
+                  <span className="hidden sm:inline">Search Properties</span>
+                  <span className="sm:hidden">Search</span>
+                </Button>
               </div>
 
-              <Button
-                onClick={handleSearch}
-                className="w-full bg-blue-500 hover:bg-blue-500/90 text-lg py-4 rounded-xl cursor-pointer"
-                size={"lg"}
-              >
-                <Search className="mr-2 h-5 w-5" />
-                Search Properties
-              </Button>
+              {/* Quick Filters */}
+              <div className="mt-4 pt-4 border-t border-white/20">
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <span className="text-white/70 text-sm mr-2">Popular:</span>
+                  {[
+                    "Houses in Lagos",
+                    "Apartments in Abuja",
+                    "Land in Ghana",
+                    "Villas in Dubai",
+                  ].map((filter, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSearchQuery(filter.split(" in ")[1])}
+                      className="text-white/80 hover:text-white text-sm bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-all duration-200"
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Stats */}
-          <div
+          {/* <div
             className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 animate-scale-in"
             style={{ animationDelay: "0.9s" }}
           >
@@ -198,7 +229,7 @@ export default function EnhancedHeroSection() {
                 <div className="text-sm opacity-90">{stat.label}</div>
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
 
