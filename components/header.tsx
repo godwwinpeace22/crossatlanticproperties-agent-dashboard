@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import { Menu, X, MapPin, ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -31,6 +31,82 @@ export function Header({ user }: HeaderProps) {
             className="transition-colors hover:text-dnx-orange"
           >
             Properties
+          </Link>
+          <div className="group relative">
+            <div className="flex items-center gap-1 text-sm font-medium transition-colors hover:text-dnx-orange cursor-pointer">
+              Locations
+              <ChevronDown className="h-4 w-4" />
+            </div>
+            <div className="absolute top-full left-0 mt-1 w-48 bg-background border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="py-1">
+                <Link
+                  href="/properties?location=lagos"
+                  className="block px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  Lagos
+                </Link>
+                <Link
+                  href="/properties?location=abuja"
+                  className="block px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  Abuja (FCT)
+                </Link>
+                <Link
+                  href="/properties?location=port-harcourt"
+                  className="block px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  Port Harcourt
+                </Link>
+                <Link
+                  href="/properties?location=kano"
+                  className="block px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  Kano
+                </Link>
+                <Link
+                  href="/properties?location=ibadan"
+                  className="block px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  Ibadan
+                </Link>
+                <Link
+                  href="/properties?location=benin-city"
+                  className="block px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  Benin City
+                </Link>
+                <Link
+                  href="/properties?location=kaduna"
+                  className="block px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  Kaduna
+                </Link>
+                <Link
+                  href="/properties?location=jos"
+                  className="block px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  Jos
+                </Link>
+                <Link
+                  href="/properties?location=warri"
+                  className="block px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  Warri
+                </Link>
+                <Link
+                  href="/properties?location=enugu"
+                  className="block px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  Enugu
+                </Link>
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/blog"
+            className="transition-colors hover:text-dnx-orange"
+          >
+            Blog
           </Link>
           <Link
             href="/market-analysis"
@@ -117,9 +193,57 @@ export function Header({ user }: HeaderProps) {
                 >
                   Properties
                 </Link>
+
+                {/* Mobile Locations Section */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center gap-2 mb-3 text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span className="font-medium">Popular Locations</span>
+                  </div>
+                  <div className="pl-6 flex flex-col gap-2">
+                    <Link
+                      href="/properties?location=lagos"
+                      className="transition-colors hover:text-dnx-orange text-sm"
+                    >
+                      Lagos
+                    </Link>
+                    <Link
+                      href="/properties?location=abuja"
+                      className="transition-colors hover:text-dnx-orange text-sm"
+                    >
+                      Abuja (FCT)
+                    </Link>
+                    <Link
+                      href="/properties?location=port-harcourt"
+                      className="transition-colors hover:text-dnx-orange text-sm"
+                    >
+                      Port Harcourt
+                    </Link>
+                    <Link
+                      href="/properties?location=kano"
+                      className="transition-colors hover:text-dnx-orange text-sm"
+                    >
+                      Kano
+                    </Link>
+                    <Link
+                      href="/properties?location=ibadan"
+                      className="transition-colors hover:text-dnx-orange text-sm"
+                    >
+                      Ibadan
+                    </Link>
+                  </div>
+                </div>
+
+                <Link
+                  href="/blog"
+                  className="transition-colors hover:text-dnx-orange"
+                >
+                  Blog
+                </Link>
+
                 <Link
                   href="/market-analysis"
-                  className="transition-colors hover:text-dnx-orange"
+                  className="transition-colors hover:text-dnx-orange border-t pt-4"
                 >
                   Market Analysis
                 </Link>

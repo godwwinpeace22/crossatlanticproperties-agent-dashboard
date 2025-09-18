@@ -15,6 +15,7 @@ import {
   Maximize,
   Share2,
   Loader2,
+  Phone,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -684,6 +685,60 @@ export default function PropertyDetailPage({
                     <Share2 className="mr-2 h-4 w-4" />
                     Share Property
                   </Button>
+                </div>
+              </div>
+
+              {/* Call to Inquire */}
+              <div className="rounded-lg border border-gray-200 p-6 bg-white">
+                <h3 className="text-lg font-semibold mb-4">Call to Inquire</h3>
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Have questions? Call us directly for immediate assistance.
+                  </p>
+                  {/* Nigerian Line */}
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center">
+                      <Phone className="h-5 w-5 text-blue-600 mr-3" />
+                      <div>
+                        <p className="font-semibold text-blue-900">
+                          +234 708 611 2909
+                        </p>
+                        <p className="text-sm text-blue-700">
+                          Nigeria • Mon-Fri 9AM-6PM WAT
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-blue-200 text-blue-700 hover:bg-blue-100"
+                      onClick={() => window.open("tel:+2347086112909", "_self")}
+                    >
+                      Call Now
+                    </Button>
+                  </div>
+                  {/* UK Line */}
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center">
+                      <Phone className="h-5 w-5 text-green-600 mr-3" />
+                      <div>
+                        <p className="font-semibold text-green-900">
+                          +44 743 546 8699
+                        </p>
+                        <p className="text-sm text-green-700">
+                          UK • Mon-Fri 9AM-5PM GMT
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-green-200 text-green-700 hover:bg-green-100"
+                      onClick={() => window.open("tel:+447435468699", "_self")}
+                    >
+                      Call Now
+                    </Button>
+                  </div>
                 </div>
               </div>
 

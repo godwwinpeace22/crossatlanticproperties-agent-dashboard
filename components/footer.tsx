@@ -81,7 +81,7 @@ export function Footer() {
         </div>
 
         {/* Main content grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           {/* Company info */}
           <div className="lg:col-span-1">
             <p className="text-gray-300 mb-6 leading-relaxed">
@@ -143,7 +143,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="#"
+                  href="/properties?purpose=sale"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
                   Buy Properties
@@ -151,7 +151,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/services"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
                   Sell Properties
@@ -159,7 +159,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/properties?purpose=rent"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
                   Rent Properties
@@ -167,7 +167,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/services"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
                   Property Valuation
@@ -182,7 +182,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="#"
+                  href="/properties?category=house"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
                   Residential Homes
@@ -190,7 +190,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/properties?category=commercial"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
                   Commercial Spaces
@@ -198,7 +198,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/properties?category=villa"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
                   Luxury Estates
@@ -206,10 +206,57 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/properties?category=land"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
                   Land & Plots
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Popular Locations */}
+          <div>
+            <h3 className="text-white font-semibold mb-6">Popular Locations</h3>
+            <ul className="space-y-3">
+              <li>
+                <a
+                  href="/properties?location=lagos"
+                  className="text-gray-300 hover:text-white transition-colors text-sm"
+                >
+                  Lagos Properties
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/properties?location=abuja"
+                  className="text-gray-300 hover:text-white transition-colors text-sm"
+                >
+                  Abuja (FCT)
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/properties?location=port-harcourt"
+                  className="text-gray-300 hover:text-white transition-colors text-sm"
+                >
+                  Port Harcourt
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/properties?location=kano"
+                  className="text-gray-300 hover:text-white transition-colors text-sm"
+                >
+                  Kano
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/properties?location=ibadan"
+                  className="text-gray-300 hover:text-white transition-colors text-sm"
+                >
+                  Ibadan
                 </a>
               </li>
             </ul>

@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   Network,
+  PenTool,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -55,6 +56,11 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
             href: "/dashboard/admin/agents",
             icon: Users,
             label: "Manage Agents",
+          },
+          {
+            href: "/dashboard/admin/blog",
+            icon: PenTool,
+            label: "Blog Management",
           },
           {
             href: "/dashboard/admin/approvals",

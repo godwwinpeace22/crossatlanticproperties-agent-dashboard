@@ -144,3 +144,49 @@ export interface PropertySortOption {
   value: string;
   label: string;
 }
+
+// Blog-related types
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string | null;
+  image_url: string | null;
+  category: string | null;
+  tags: string[] | null;
+  status: "draft" | "published";
+  featured: boolean;
+  views: number;
+  author_id: string | null;
+  author_name: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogPostFilters {
+  category?: string;
+  status?: string;
+  search?: string;
+  featured?: boolean;
+}
+
+export interface BlogPostFormData {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  tags: string[];
+  image_url: string;
+  featured: boolean;
+  status: "draft" | "published";
+}
+
+export interface BlogStats {
+  total: number;
+  published: number;
+  drafts: number;
+  totalViews: number;
+}
