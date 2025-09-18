@@ -3,14 +3,14 @@
  */
 
 /**
- * Formats a number as US currency with proper dollar signs, commas, and 2 decimal places
+ * Formats a number as Nigerian currency with proper naira signs, commas, and 2 decimal places
  * @param amount - The number to format as currency
- * @returns Formatted currency string (e.g., "$1,234.56")
+ * @returns Formatted currency string (e.g., "₦1,234.56")
  */
 export const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("en-US", {
+  new Intl.NumberFormat("en-NG", {
     style: "currency",
-    currency: "USD",
+    currency: "NGN",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
@@ -21,7 +21,7 @@ export const formatCurrency = (amount: number) =>
  * @returns Formatted number string (e.g., "1,234")
  */
 export const formatNumber = (num: number) =>
-  new Intl.NumberFormat("en-US").format(num);
+  new Intl.NumberFormat("en-NG").format(num);
 
 /**
  * Formats a percentage with proper decimal places
@@ -30,7 +30,7 @@ export const formatNumber = (num: number) =>
  * @returns Formatted percentage string (e.g., "12.5%")
  */
 export const formatPercentage = (percentage: number, decimals: number = 1) =>
-  new Intl.NumberFormat("en-US", {
+  new Intl.NumberFormat("en-NG", {
     style: "percent",
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

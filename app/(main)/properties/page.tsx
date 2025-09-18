@@ -1,25 +1,25 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
+import useSWR from "swr";
 import {
   Search,
+  SlidersHorizontal,
+  Grid,
+  List,
   MapPin,
   Bed,
   Bath,
   Maximize,
-  Heart,
-  Eye,
-  ArrowRight,
-  Grid,
-  List,
-  SlidersHorizontal,
+  Building,
+  Home,
+  TreePine,
+  Car,
+  Clock,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -28,228 +28,239 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Badge } from "@/components/ui/badge";
+import { PropertyCard, PropertyCardSkeleton } from "@/components/property-card";
 import { createClient } from "@/lib/supabase/client";
-// import { FavoritesButton } from "@/components/favorites-button";
+import { Property, PropertyType, PropertyFilters } from "@/lib/types";
 
-interface PropertyImage {
-  id: number;
-  url: string;
-  isPrimary: boolean;
-  category?: string;
-}
+// Define constants
+const PROPERTY_CATEGORIES = [
+  { value: "all", label: "All Categories" },
+  { value: "apartment", label: "Apartment" },
+  { value: "house", label: "House" },
+  { value: "villa", label: "Villa" },
+  { value: "townhouse", label: "Townhouse" },
+  { value: "land", label: "Land" },
+  { value: "commercial", label: "Commercial" },
+];
 
-interface Property {
-  id: string;
-  name: string;
-  title: string;
-  description: string;
-  price: number;
-  location: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  property_type: string;
-  propertyType: string;
-  status: string;
-  purpose: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  squareFeet?: number;
-  created_at: string;
-  images: PropertyImage[];
-  primaryImage?: PropertyImage;
-  virtualTourEnabled?: boolean;
-}
+const PURPOSE_OPTIONS = [
+  { value: "all", label: "All Purposes" },
+  { value: "sale", label: "For Sale" },
+  { value: "rent", label: "For Rent" },
+];
 
-function PropertiesContent() {
+const BEDROOM_OPTIONS = [
+  { value: "all", label: "Any Bedrooms" },
+  { value: "1", label: "1+ Bedrooms" },
+  { value: "2", label: "2+ Bedrooms" },
+  { value: "3", label: "3+ Bedrooms" },
+  { value: "4", label: "4+ Bedrooms" },
+  { value: "5", label: "5+ Bedrooms" },
+];
+
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest First" },
+  { value: "price_low", label: "Price: Low to High" },
+  { value: "price_high", label: "Price: High to Low" },
+];
+
+export default function PropertiesPage() {
   const searchParams = useSearchParams();
+
+  // State for filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 3000000]);
-  const [selectedType, setSelectedType] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedPropertyType, setSelectedPropertyType] = useState("all");
+  const [selectedPurpose, setSelectedPurpose] = useState("all");
   const [selectedBeds, setSelectedBeds] = useState("all");
-  const [viewMode, setViewMode] = useState("grid");
+  const [priceRange, setPriceRange] = useState([0, 3000000]);
   const [sortBy, setSortBy] = useState("newest");
-  const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Supabase data fetching states
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
-  const [pagination, setPagination] = useState<{
-    total: number;
-    page: number;
-    limit: number;
-    hasNextPage: boolean;
-  } | null>(null);
+  // Initialize filters from URL params
+  useEffect(() => {
+    const category = searchParams.get("category");
+    const purpose = searchParams.get("purpose");
+    const propertyType = searchParams.get("propertyType");
+    const search = searchParams.get("search");
 
-  // Fetch properties from Supabase
-  const fetchProperties = async () => {
-    try {
-      setIsLoading(true);
-      setIsError(false);
+    if (category && category !== "all") setSelectedCategory(category);
+    if (purpose && purpose !== "all") setSelectedPurpose(purpose);
+    if (propertyType && propertyType !== "all")
+      setSelectedPropertyType(propertyType);
+    if (search) setSearchQuery(search);
+  }, [searchParams]);
+
+  // Fetch property types
+  const { data: propertyTypes, error: propertyTypesError } = useSWR(
+    "property-types",
+    async () => {
       const supabase = createClient();
+      const { data, error } = await supabase
+        .from("property_types")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data;
+    }
+  );
 
-      let query = supabase.from("properties").select("*", { count: "exact" });
+  // Create cache key for SWR
+  const cacheKey = useMemo(
+    () => [
+      "properties",
+      searchQuery,
+      selectedCategory,
+      selectedPropertyType,
+      selectedPurpose,
+      selectedBeds,
+      priceRange,
+      sortBy,
+      currentPage,
+    ],
+    [
+      searchQuery,
+      selectedCategory,
+      selectedPropertyType,
+      selectedPurpose,
+      selectedBeds,
+      priceRange,
+      sortBy,
+      currentPage,
+    ]
+  );
 
-      // Apply filters
-      if (searchQuery) {
-        query = query.or(
-          `name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`
-        );
-      }
+  // SWR fetcher function
+  const fetchProperties = async () => {
+    const supabase = createClient();
 
-      if (selectedCategory !== "all") {
-        query = query.eq("property_type", selectedCategory);
-      }
+    let query = supabase.from("properties").select("*", { count: "exact" });
 
-      if (selectedBeds !== "all") {
-        query = query.gte("bedrooms", parseInt(selectedBeds));
-      }
+    // Apply filters
+    if (searchQuery) {
+      query = query.or(
+        `name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`
+      );
+    }
 
-      if (priceRange[0] > 0) {
-        query = query.gte("price", priceRange[0]);
-      }
+    if (selectedCategory !== "all") {
+      query = query.eq("category", selectedCategory);
+    }
 
-      if (priceRange[1] < 3000000) {
-        query = query.lte("price", priceRange[1]);
-      }
+    if (selectedPropertyType !== "all") {
+      query = query.eq("propertyType", selectedPropertyType);
+    }
 
-      // Apply sorting
-      if (sortBy === "newest") {
-        query = query.order("created_at", { ascending: false });
-      } else if (sortBy === "price_low") {
-        query = query.order("price", { ascending: true });
-      } else if (sortBy === "price_high") {
-        query = query.order("price", { ascending: false });
-      }
+    if (selectedPurpose !== "all") {
+      query = query.eq("purpose", selectedPurpose);
+    }
 
-      // Apply pagination
-      const limit = 12;
-      const from = (currentPage - 1) * limit;
-      const to = from + limit - 1;
-      query = query.range(from, to);
+    if (selectedBeds !== "all") {
+      query = query.gte("bedrooms", parseInt(selectedBeds));
+    }
 
-      const {
-        data: propertiesData,
-        error: propertiesError,
-        count,
-      } = await query;
+    if (priceRange[0] > 0) {
+      query = query.gte("price", priceRange[0]);
+    }
 
-      if (propertiesError) throw propertiesError;
+    if (priceRange[1] < 3000000) {
+      query = query.lte("price", priceRange[1]);
+    }
 
-      if (propertiesData) {
-        // Fetch images for each property
-        const propertiesWithImages = await Promise.all(
-          propertiesData.map(async (property) => {
-            const { data: images } = await supabase
-              .from("property_images")
-              .select("*")
-              .eq("property_id", property.id)
-              .order("sort_order", { ascending: true });
+    // Apply sorting
+    if (sortBy === "newest") {
+      query = query.order("created_at", { ascending: false });
+    } else if (sortBy === "price_low") {
+      query = query.order("price", { ascending: true });
+    } else if (sortBy === "price_high") {
+      query = query.order("price", { ascending: false });
+    }
 
-            const primaryImage =
-              images?.find((img) => img.isPrimary) || images?.[0];
+    // Apply pagination
+    const limit = 12;
+    const from = (currentPage - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
 
-            return {
-              ...property,
-              title: property.name || property.title,
-              propertyType: property.property_type,
-              images: images || [],
-              primaryImage,
-              virtualTourEnabled: images && images.length > 0, // Assuming properties with images have virtual tours
-            };
-          })
-        );
+    const { data: propertiesData, error: propertiesError, count } = await query;
 
-        setProperties(propertiesWithImages);
+    if (propertiesError) throw propertiesError;
 
-        // Set pagination info
-        setPagination({
+    if (propertiesData) {
+      // Fetch property types to map names
+      const { data: propertyTypesData } = await supabase
+        .from("property_types")
+        .select("id, name");
+
+      const propertyTypeMap = new Map(
+        propertyTypesData?.map((type) => [type.id, type.name]) || []
+      );
+
+      // Fetch images for each property
+      const propertiesWithImages = await Promise.all(
+        propertiesData.map(async (property) => {
+          const { data: images } = await supabase
+            .from("property_images")
+            .select("*")
+            .eq("property_id", property.id)
+            .order("sort_order", { ascending: true });
+
+          const primaryImage =
+            images?.find((img) => img.isPrimary) || images?.[0];
+
+          return {
+            ...property,
+            title: property.name || property.title,
+            images: images || [],
+            primaryImage,
+            virtualTourEnabled: images && images.length > 0,
+            propertyTypeName:
+              propertyTypeMap.get(property.propertyType) || "Unknown",
+          };
+        })
+      );
+
+      return {
+        properties: propertiesWithImages,
+        pagination: {
           total: count || 0,
           page: currentPage,
           limit,
           hasNextPage: count ? from + limit < count : false,
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching properties:", error);
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
+        },
+      };
     }
+
+    return { properties: [], pagination: null };
   };
 
-  // Fetch properties when filters change
-  useEffect(() => {
-    fetchProperties();
-  }, [
-    searchQuery,
-    selectedType,
-    selectedCategory,
-    selectedBeds,
-    priceRange,
-    sortBy,
-    currentPage,
-  ]);
+  // Use SWR for data fetching
+  const { data, error, isLoading, mutate } = useSWR(cacheKey, fetchProperties, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 5000,
+  });
 
-  // Build API parameters from current filters (kept for compatibility)
-  const apiParams = {
-    search: searchQuery || undefined,
-    status:
-      selectedType === "all"
-        ? "active"
-        : selectedType === "sale"
-        ? "for_sale"
-        : "for_rent",
-    propertyType: selectedCategory === "all" ? undefined : selectedCategory,
-    bedrooms: selectedBeds === "all" ? undefined : parseInt(selectedBeds),
-    minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
-    maxPrice: priceRange[1] < 3000000 ? priceRange[1] : undefined,
-    page: currentPage,
-    limit: 12,
-    sortBy:
-      sortBy === "newest"
-        ? "listingDate"
-        : sortBy === "popular"
-        ? "listingDate"
-        : "price",
-    sortOrder: sortBy === "price_low" ? "asc" : "desc",
-  };
+  const properties = data?.properties || [];
+  const pagination = data?.pagination;
 
-  // Fetch properties using the custom hook
-  // const { properties, pagination, isLoading, isError, mutate } =
-  //   useProperties(apiParams);
-
-  useEffect(() => {
-    // Get initial filters from URL params
-    const type = searchParams.get("type") || "all";
-    const category = searchParams.get("category") || "all";
-    const search = searchParams.get("search") || "";
-
-    setSelectedType(type);
-    setSelectedCategory(category);
-    setSearchQuery(search);
-  }, [searchParams]);
-
-  // Helper functions to format data
+  // Format price function
   const formatPrice = (price: number, purpose?: string) => {
-    const formattedPrice = new Intl.NumberFormat("en-US", {
+    const formattedPrice = new Intl.NumberFormat("en-NG", {
       style: "currency",
-      currency: "USD",
+      currency: "NGN",
     }).format(price);
 
     // Add "/month" suffix for rental properties
-    if (purpose === "rental") {
+    if (purpose === "rent") {
       return `${formattedPrice}/month`;
     }
 
     return formattedPrice;
   };
+
   const getPropertyTypeDisplay = (status: string) => {
     return status === "available"
       ? "Available"
@@ -268,458 +279,340 @@ function PropertiesContent() {
 
   const handleClearFilters = () => {
     setSearchQuery("");
-    setSelectedType("all");
     setSelectedCategory("all");
+    setSelectedPropertyType("all");
+    setSelectedPurpose("all");
     setSelectedBeds("all");
     setPriceRange([0, 3000000]);
     setCurrentPage(1);
   };
 
-  // Loading state
-  if (isLoading && properties.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <section className="bg-gradient-to-r from-dnx-blue to-dnx-orange text-white py-16">
-          <div className="container-custom">
-            <div className="text-center">
-              <h1 className="text-4xl md:text-6xl font-display font-bold mb-4">
-                Find Your Perfect Property
-              </h1>
-              <p className="text-xl opacity-90 max-w-2xl mx-auto">
-                Discover premium properties across Africa with our advanced
-                search and virtual tour technology
-              </p>
-            </div>
-          </div>
-        </section>
-        <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner />
-          <span className="ml-2 text-gray-600">Loading properties...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (isError) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <section className="bg-gradient-to-r from-dnx-blue to-dnx-orange text-white py-16">
-          <div className="container-custom">
-            <div className="text-center">
-              <h1 className="text-4xl md:text-6xl font-display font-bold mb-4">
-                Find Your Perfect Property
-              </h1>
-              <p className="text-xl opacity-90 max-w-2xl mx-auto">
-                Discover premium properties across Africa with our advanced
-                search and virtual tour technology
-              </p>
-            </div>
-          </div>
-        </section>
-        <div className="flex justify-center items-center min-h-[400px]">
-          <div className="text-center">
-            <p className="text-red-600 mb-4">Failed to load properties</p>
-            <Button onClick={() => fetchProperties()} className="btn-primary">
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchQuery,
+    selectedCategory,
+    selectedPropertyType,
+    selectedPurpose,
+    selectedBeds,
+    priceRange,
+    sortBy,
+  ]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-blue-500 to-orange-500 text-white py-16">
         <div className="container-custom">
-          <div className="text-center mb-8">
+          <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-display font-bold mb-4">
               Find Your Perfect Property
             </h1>
             <p className="text-xl opacity-90 max-w-2xl mx-auto">
               Discover premium properties across Africa with our advanced search
-              and virtual tour technology
+              technology
             </p>
           </div>
-
-          {/* Enhanced Search Bar */}
-          <div className="max-w-4xl mx-auto">
-            <div className="glass-effect rounded-2xl p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger className="form-select text-gray-900">
-                    <SelectValue placeholder="Buy/Rent" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="sale">For Sale</SelectItem>
-                    <SelectItem value="rent">For Rent</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={selectedCategory}
-                  onValueChange={setSelectedCategory}
-                >
-                  <SelectTrigger className="form-select text-gray-900">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="residential">Residential</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
-                    <SelectItem value="land">Land</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={selectedBeds} onValueChange={setSelectedBeds}>
-                  <SelectTrigger className="form-select text-gray-900">
-                    <SelectValue placeholder="Bedrooms" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Any Bedrooms</SelectItem>
-                    <SelectItem value="1">1+ Bedrooms</SelectItem>
-                    <SelectItem value="2">2+ Bedrooms</SelectItem>
-                    <SelectItem value="3">3+ Bedrooms</SelectItem>
-                    <SelectItem value="4">4+ Bedrooms</SelectItem>
-                    <SelectItem value="5">5+ Bedrooms</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white" />
-                  <Input
-                    type="text"
-                    placeholder="Location or Property ID"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="form-input pl-10 text-gray-900"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="border-white/30 text-black hover:bg-white/20"
-                >
-                  <SlidersHorizontal className="mr-2 h-4 w-4" />
-                  Advanced Filters
-                </Button>
-
-                <Button className="btn-secondary">
-                  <Search className="mr-2 h-5 w-5" />
-                  Search Properties
-                </Button>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Advanced Filters Panel */}
-      {showFilters && (
-        <section className="bg-white border-b border-gray-200 py-6">
-          <div className="container-custom">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price Range: ${priceRange[0].toLocaleString()} - $
-                  {priceRange[1].toLocaleString()}
-                </label>
-                <Slider
-                  value={priceRange}
-                  onValueChange={setPriceRange}
-                  max={3000000}
-                  min={0}
-                  step={50000}
-                  className="w-full"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Features
-                </label>
-                <div className="space-y-2">
-                  {[
-                    "Virtual Tour",
-                    "Swimming Pool",
-                    "Garden",
-                    "Parking",
-                    "Security",
-                  ].map((feature) => (
-                    <div key={feature} className="flex items-center space-x-2">
-                      <Checkbox id={feature} />
-                      <label
-                        htmlFor={feature}
-                        className="text-sm text-gray-600"
-                      >
-                        {feature}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Property Size
-                </label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Any Size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any Size</SelectItem>
-                    <SelectItem value="small">Under 1,000 sq ft</SelectItem>
-                    <SelectItem value="medium">1,000 - 2,500 sq ft</SelectItem>
-                    <SelectItem value="large">2,500 - 5,000 sq ft</SelectItem>
-                    <SelectItem value="xlarge">Over 5,000 sq ft</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Results Section */}
-      <section className="section-padding">
+      {/* Category Pills */}
+      <section className="bg-white py-6 border-b">
         <div className="container-custom">
-          {/* Results Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {pagination?.total || properties.length} Properties Found
-              </h2>
-              <p className="text-gray-600 mt-1">
-                {pagination
-                  ? `Showing ${
-                      (pagination.page - 1) * pagination.limit + 1
-                    }-${Math.min(
-                      pagination.page * pagination.limit,
-                      pagination.total
-                    )} of ${pagination.total} results`
-                  : "Showing results for your search criteria"}
-              </p>
-            </div>
-
-            <div className="flex items-center space-x-4 mt-4 md:mt-0">
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="price_low">Price: Low to High</SelectItem>
-                  <SelectItem value="price_high">Price: High to Low</SelectItem>
-                  <SelectItem value="popular">Most Popular</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="flex items-center border border-gray-200 rounded-lg">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="rounded-r-none"
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className="rounded-l-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+          <div className="text-center mb-6">
+            <p className="text-gray-600">
+              Discover our handpicked selection of premium properties
+            </p>
           </div>
-
-          {/* Properties Grid/List */}
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
-                : "space-y-6"
-            }
-          >
-            {properties.map((property) => (
-              <div
-                key={property.id}
-                className={`property-card ${viewMode === "list" ? "flex" : ""}`}
+          <div className="flex flex-wrap justify-center gap-3">
+            {PROPERTY_CATEGORIES.slice(1).map((category) => (
+              <Button
+                key={category.value}
+                variant={
+                  selectedCategory === category.value ? "default" : "outline"
+                }
+                size="sm"
+                onClick={() => setSelectedCategory(category.value)}
+                className="rounded-full"
               >
-                <div
-                  className={`relative ${
-                    viewMode === "list" ? "w-80 h-60" : "h-64"
-                  } overflow-hidden`}
-                >
-                  <Image
-                    src={
-                      property.primaryImage?.url ||
-                      property.images?.[0]?.url ||
-                      "/placeholder.svg"
-                    }
-                    alt={property.title}
-                    fill
-                    className="object-cover property-image"
-                  />
-
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
-                      <div className="flex space-x-2">
-                        {/* <FavoritesButton propertyId={property.id} /> */}
-                        {property.virtualTourEnabled && (
-                          <Button
-                            asChild
-                            size="sm"
-                            variant="outline"
-                            className="glass-effect border-white/30 text-white hover:bg-white/20"
-                          >
-                            <Link href={`/virtual-tours/${property.id}`}>
-                              <Eye className="h-4 w-4 mr-1" />
-                              Virtual Tour
-                            </Link>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Badges */}
-                  <div className="absolute top-4 left-4 flex flex-col space-y-2">
-                    <Badge
-                      className={
-                        property.status === "available"
-                          ? "bg-dnx-blue"
-                          : "bg-dnx-orange"
-                      }
-                    >
-                      {getPropertyTypeDisplay(property.status)}
-                    </Badge>
-                    {property.virtualTourEnabled && (
-                      <Badge
-                        variant="outline"
-                        className="bg-white/90 text-gray-900"
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        Virtual Tour
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                <div className={`p-6 ${viewMode === "list" ? "flex-1" : ""}`}>
-                  <div className="mb-3">
-                    <Link href={`/properties/${property.id}`}>
-                      <h3 className="text-lg font-bold text-gray-900 line-clamp-2 mb-2">
-                        {property.title}
-                      </h3>
-                    </Link>
-                    <div className="text-base font-bold text-dnx-blue">
-                      {formatPrice(property.price, property.purpose)}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center text-gray-600 mb-4">
-                    <MapPin className="h-4 w-4 mr-1 text-dnx-orange" />
-                    <span>
-                      {property.city}, {property.state}
-                    </span>
-                  </div>
-
-                  {/* Property Details */}
-                  <div className="flex items-center space-x-6 mb-4 text-sm text-gray-600">
-                    {property.bedrooms && property.propertyType !== "land" && (
-                      <div className="flex items-center">
-                        <Bed className="h-4 w-4 mr-1" />
-                        <span>{property.bedrooms} beds</span>
-                      </div>
-                    )}
-                    {property.bathrooms && property.propertyType !== "land" && (
-                      <div className="flex items-center">
-                        <Bath className="h-4 w-4 mr-1" />
-                        <span>{property.bathrooms} baths</span>
-                      </div>
-                    )}
-                    {property.squareFeet && (
-                      <div className="flex items-center">
-                        <Maximize className="h-4 w-4 mr-1" />
-                        <span>
-                          {property.squareFeet.toLocaleString()} sq ft
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Property Type */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge variant="outline" className="text-xs">
-                      {property.propertyType?.charAt(0)?.toUpperCase() +
-                        property.propertyType?.slice(1)}
-                    </Badge>
-                    {property.description && (
-                      <Badge variant="outline" className="text-xs">
-                        Details Available
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
+                {category.label}
+              </Button>
             ))}
           </div>
+        </div>
+      </section>
 
-          {/* Load More */}
-          {pagination?.hasNextPage && (
-            <div className="text-center mt-12">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleLoadMore}
-                disabled={isLoading}
-                className="min-w-40"
-              >
-                {isLoading ? "Loading..." : "Load More Properties"}
-              </Button>
-            </div>
-          )}
+      {/* Main Content */}
+      <div className="container-custom py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar Filters */}
+          <div className="lg:w-80 bg-white rounded-lg shadow-sm border border-gray-200 h-fit">
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <SlidersHorizontal className="h-5 w-5 text-gray-600" />
+                <h2 className="font-semibold text-gray-900">Filters</h2>
+              </div>
 
-          {/* No Results */}
-          {properties.length === 0 && !isLoading && (
-            <div className="text-center py-16">
-              <div className="max-w-md mx-auto">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Search className="h-12 w-12 text-gray-400" />
+              <div className="space-y-6">
+                {/* Search Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Search Properties
+                  </label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search by name, city, or address..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  No Properties Found
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Try adjusting your search criteria or browse all properties.
-                </p>
-                <Button onClick={handleClearFilters} className="btn-primary">
-                  Clear Filters
+
+                {/* Category Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category
+                  </label>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={setSelectedCategory}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROPERTY_CATEGORIES.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Property Type Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Property Type
+                  </label>
+                  <Select
+                    value={selectedPropertyType}
+                    onValueChange={setSelectedPropertyType}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select property type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Property Types</SelectItem>
+                      {propertyTypes?.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Purpose Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Purpose
+                  </label>
+                  <Select
+                    value={selectedPurpose}
+                    onValueChange={setSelectedPurpose}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select purpose" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PURPOSE_OPTIONS.map((purpose) => (
+                        <SelectItem key={purpose.value} value={purpose.value}>
+                          {purpose.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Bedrooms Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bedrooms
+                  </label>
+                  <Select value={selectedBeds} onValueChange={setSelectedBeds}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select bedrooms" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BEDROOM_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Price Range
+                  </label>
+                  <div className="px-3">
+                    <Slider
+                      value={priceRange}
+                      onValueChange={setPriceRange}
+                      max={3000000}
+                      min={0}
+                      step={50000}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-sm text-gray-600 mt-1">
+                      <span>${(priceRange[0] / 1000).toFixed(0)}K</span>
+                      <span>${(priceRange[1] / 1000).toFixed(0)}K</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Clear Filters */}
+                <Button
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  className="w-full"
+                >
+                  Clear All Filters
                 </Button>
               </div>
             </div>
-          )}
-        </div>
-      </section>
-    </div>
-  );
-}
+          </div>
 
-export default function PropertiesPage() {
-  return (
-    <Suspense fallback={<LoadingSpinner />}>
-      <PropertiesContent />
-    </Suspense>
+          {/* Properties Content */}
+          <div className="flex-1">
+            {/* Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Properties {!isLoading && `(${pagination?.total || 0})`}
+                </h2>
+                <p className="text-gray-600">
+                  Find your dream property from our exclusive listings
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4">
+                {/* Sort Dropdown */}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SORT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="flex items-center border border-gray-200 rounded-lg">
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                    className="rounded-r-none"
+                  >
+                    <Grid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                    className="rounded-l-none"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Properties Grid/List */}
+            {error && (
+              <div className="text-center py-8">
+                <p className="text-red-600">Error loading properties</p>
+                <Button
+                  onClick={() => mutate()}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  Try Again
+                </Button>
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <PropertyCardSkeleton key={i} />
+                ))}
+              </div>
+            )}
+
+            {!isLoading && !error && (
+              <>
+                {viewMode === "grid" ? (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {properties.map((property) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        viewMode="grid"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {properties.map((property) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        viewMode="list"
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {properties.length === 0 && (
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No properties found
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Try adjusting your search criteria or browse all
+                      properties.
+                    </p>
+                    <Button onClick={handleClearFilters} variant="outline">
+                      Clear Filters
+                    </Button>
+                  </div>
+                )}
+
+                {/* Load More */}
+                {pagination?.hasNextPage && (
+                  <div className="text-center py-8">
+                    <Button onClick={handleLoadMore} variant="outline">
+                      Load More Properties
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

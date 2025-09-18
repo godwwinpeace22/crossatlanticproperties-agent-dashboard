@@ -13,7 +13,7 @@ interface Property {
   description?: string;
   price: number;
   location?: string;
-  property_type?: string;
+  category?: string;
   status: string; // 'available', 'sold', 'reserved'
   created_at: string;
   updated_at: string;
@@ -33,7 +33,7 @@ interface Listing {
   views: number;
   inquiries: number;
   lastUpdated: string;
-  propertyType: string;
+  category: string;
   purpose: string;
   rentalStatus?: string;
 }
@@ -116,7 +116,7 @@ async function getListings(): Promise<ListingsResponse> {
         views: 0, // Placeholder - would need to implement analytics
         inquiries: 0, // Placeholder - would need to implement inquiries tracking
         lastUpdated: new Date(property.updated_at).toLocaleDateString(),
-        propertyType: property.property_type || "house",
+        category: property.category || "house",
         purpose: "sale", // Default purpose since it's not in the basic table
         rentalStatus: property.status,
       };

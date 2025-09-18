@@ -48,7 +48,7 @@ interface Listing {
   views: number;
   inquiries: number;
   lastUpdated: string;
-  propertyType: string;
+  category: string;
   purpose: string;
   rentalStatus?: string;
 }
@@ -141,7 +141,7 @@ export default function SearchableListings({
     (listing) =>
       listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       listing.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      listing.propertyType.toLowerCase().includes(searchTerm.toLowerCase())
+      listing.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Sort listings
@@ -212,13 +212,9 @@ export default function SearchableListings({
             {listing.price}
           </span>
           <div className="flex space-x-3 text-sm text-gray-500">
-            {listing?.propertyType != "land" && (
-              <span>{listing.bedrooms} bd</span>
-            )}
-            {listing?.propertyType != "land" && (
-              <span>{listing.bathrooms} ba</span>
-            )}
-            {/* <span>{listing?.propertyType == 'land' ? listing?.lotSize : listing.sqft} sqft</span> */}
+            {listing?.category != "land" && <span>{listing.bedrooms} bd</span>}
+            {listing?.category != "land" && <span>{listing.bathrooms} ba</span>}
+            {/* <span>{listing?.category == 'land' ? listing?.lotSize : listing.sqft} sqft</span> */}
           </div>
         </div>
         <div className="flex justify-between text-sm text-gray-500">

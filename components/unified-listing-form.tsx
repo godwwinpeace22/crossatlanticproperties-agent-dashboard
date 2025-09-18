@@ -46,12 +46,18 @@ interface FormData {
   bathrooms: string;
   sqft: string;
   lotSize: string;
-  propertyType: string;
+  category: string;
   purpose: string;
   yearBuilt: string;
   garageSpaces: string;
   amenities: string[];
   status?: string; // Only for editing
+}
+
+interface FloorPlanFile {
+  file: File;
+  id: string;
+  name: string;
 }
 
 interface ImageFile {
@@ -94,7 +100,7 @@ const initialFormData: FormData = {
   bathrooms: "",
   sqft: "",
   lotSize: "",
-  propertyType: "",
+  category: "",
   purpose: "",
   yearBuilt: "",
   garageSpaces: "",
@@ -142,7 +148,7 @@ export default function UnifiedListingForm({
     description: "",
     price: "",
     location: "",
-    property_type: "",
+    category: "",
     status: "available",
     title: "",
     address: "",
@@ -153,7 +159,6 @@ export default function UnifiedListingForm({
     bathrooms: "",
     sqft: "",
     lotSize: "",
-    propertyType: "",
     purpose: "",
     yearBuilt: "",
     garageSpaces: "",
@@ -162,6 +167,10 @@ export default function UnifiedListingForm({
   const [images, setImages] = useState<ImageFile[]>([]);
   const [existingImages, setExistingImages] = useState<ExistingImage[]>([]);
   const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
+  const [floorPlan, setFloorPlan] = useState<FloorPlanFile | null>(null);
+  const [existingFloorPlan, setExistingFloorPlan] = useState<string | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(mode === "edit");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -201,8 +210,6 @@ export default function UnifiedListingForm({
             description: property.description || "",
             price: property.price?.toString() || "",
             location: property.address || property.location || "",
-            property_type:
-              property.propertyType || property.property_type || "",
             status: property.status || "available",
             title: property.title || property.name || "",
             address: property.address || property.location || "",
@@ -213,7 +220,7 @@ export default function UnifiedListingForm({
             bathrooms: property.bathrooms?.toString() || "",
             sqft: property.squareFeet?.toString() || "",
             lotSize: property.lotSize?.toString() || "",
-            propertyType: property.propertyType || property.property_type || "",
+            category: property.category || "",
             purpose: property.purpose || "",
             yearBuilt: property.yearBuilt?.toString() || "",
             garageSpaces: property.garageSpaces?.toString() || "",
@@ -229,6 +236,11 @@ export default function UnifiedListingForm({
           }));
 
           setExistingImages(formattedImages);
+
+          // Set existing floor plan if available
+          if (property.floor_plan_url) {
+            setExistingFloorPlan(property.floor_plan_url);
+          }
         } catch (error) {
           setError("Failed to load listing data");
           console.error("Error fetching listing:", error);
@@ -282,6 +294,46 @@ export default function UnifiedListingForm({
       }
       return updated;
     });
+  };
+
+  const handleFloorPlanUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const isValidType = file.type.startsWith("image/");
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+
+      if (!isValidType) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload an image file",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!isValidSize) {
+        toast({
+          title: "File too large",
+          description: "Floor plan must be under 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setFloorPlan({
+        file,
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+      });
+    }
+  };
+
+  const removeFloorPlan = () => {
+    setFloorPlan(null);
+  };
+
+  const removeExistingFloorPlan = () => {
+    setExistingFloorPlan(null);
   };
 
   const removeImage = (id: string) => {
@@ -366,11 +418,11 @@ export default function UnifiedListingForm({
     if (!formData.zipCode.trim()) return "ZIP code is required";
     if (!formData.price || parseFloat(formData.price) <= 0)
       return "Valid price is required";
-    if (!formData.propertyType) return "Property type is required";
+    if (!formData.category) return "Property type is required";
     if (!formData.purpose) return "Purpose (sale/rent) is required";
 
     // These fields are not required for land properties
-    const isLandProperty = formData.propertyType === "land";
+    const isLandProperty = formData.category === "land";
 
     if (!isLandProperty) {
       if (!formData.bedrooms || parseInt(formData.bedrooms) < 0)
@@ -538,8 +590,8 @@ export default function UnifiedListingForm({
       }
 
       // These fields are not required for land properties
-      const propertyType = formData.propertyType || formData.property_type;
-      const isLandProperty = propertyType === "land";
+      const category = formData.category || formData.category;
+      const isLandProperty = category === "land";
 
       if (!isLandProperty) {
         if (!formData.bedrooms || parseInt(formData.bedrooms) < 0) {
@@ -573,7 +625,7 @@ export default function UnifiedListingForm({
         }
       }
 
-      if (!formData.propertyType && !formData.property_type) {
+      if (!formData.category && !formData.category) {
         throw new Error("Property type is required");
       }
 
@@ -606,8 +658,7 @@ export default function UnifiedListingForm({
         city: formData.city,
         state: formData.state,
         zipCode: formData.zipCode,
-        property_type: formData.propertyType || formData.property_type,
-        propertyType: formData.propertyType || formData.property_type,
+        category: formData.category || formData.category,
         purpose: formData.purpose,
         status: formData.status || "available",
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
@@ -620,6 +671,7 @@ export default function UnifiedListingForm({
           ? parseInt(formData.garageSpaces)
           : null,
         amenities: JSON.stringify(formData.amenities || []),
+        floor_plan_url: null, // Will be updated after floor plan upload
       };
 
       // Handle property creation/update
@@ -726,6 +778,46 @@ export default function UnifiedListingForm({
         });
       }
 
+      // Handle floor plan upload
+      let floorPlanUrl = existingFloorPlan;
+
+      // If existing floor plan was removed
+      if (mode === "edit" && existingFloorPlan && !floorPlan) {
+        floorPlanUrl = null;
+      }
+
+      // If new floor plan was uploaded
+      if (floorPlan) {
+        const fileExt = floorPlan.file.name.split(".").pop();
+        const fileName = `${propertyId}/floor-plan-${Math.random()
+          .toString(36)
+          .substring(2)}.${fileExt}`;
+
+        // Upload to storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("property-images")
+          .upload(fileName, floorPlan.file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from("property-images")
+          .getPublicUrl(fileName);
+
+        floorPlanUrl = publicUrlData.publicUrl;
+      }
+
+      // Update property with floor plan URL
+      if (floorPlanUrl !== existingFloorPlan) {
+        const { error: floorPlanError } = await supabase
+          .from("properties")
+          .update({ floor_plan_url: floorPlanUrl })
+          .eq("id", propertyId);
+
+        if (floorPlanError) throw floorPlanError;
+      }
+
       toast({
         title: mode === "edit" ? "Property updated" : "Property created",
         description: `"${propertyData.name}" has been ${
@@ -817,11 +909,11 @@ export default function UnifiedListingForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="propertyType">Property Type *</Label>
+                <Label htmlFor="category">Property Type *</Label>
                 <Select
-                  value={formData.propertyType}
+                  value={formData.category}
                   onValueChange={(value) =>
-                    handleInputChange("propertyType", value)
+                    handleInputChange("category", value)
                   }
                 >
                   <SelectTrigger>
@@ -951,7 +1043,7 @@ export default function UnifiedListingForm({
               />
             </div>
 
-            {formData.propertyType !== "land" && (
+            {formData.category !== "land" && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <Label htmlFor="bedrooms">Bedrooms *</Label>
@@ -1011,7 +1103,7 @@ export default function UnifiedListingForm({
               </div>
             )}
 
-            {formData.propertyType === "land" && (
+            {formData.category === "land" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="yearBuilt">Year Built (optional)</Label>
@@ -1033,7 +1125,7 @@ export default function UnifiedListingForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="lotSize">
-                  {formData.propertyType === "land"
+                  {formData.category === "land"
                     ? "Land Size (sq ft) *"
                     : "Lot Size (sq ft)"}
                 </Label>
@@ -1047,7 +1139,7 @@ export default function UnifiedListingForm({
                 />
               </div>
 
-              {formData.propertyType !== "land" && (
+              {formData.category !== "land" && (
                 <div>
                   <Label htmlFor="garageSpaces">Garage Spaces (optional)</Label>
                   <Input
@@ -1072,7 +1164,7 @@ export default function UnifiedListingForm({
             <CardTitle>Property Amenities</CardTitle>
             <CardDescription>
               Select all amenities that apply to your property
-              {formData.propertyType === "land" &&
+              {formData.category === "land" &&
                 " (showing land-relevant amenities only)"}
             </CardDescription>
           </CardHeader>
@@ -1080,7 +1172,7 @@ export default function UnifiedListingForm({
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {AVAILABLE_AMENITIES.filter((amenity) => {
                 // Filter out amenities that don't make sense for land properties
-                if (formData.propertyType === "land") {
+                if (formData.category === "land") {
                   const landRelevantAmenities = [
                     "Swimming Pool",
                     "Parking",
@@ -1332,6 +1424,104 @@ export default function UnifiedListingForm({
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Floor Plan */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Floor Plan</CardTitle>
+            <CardDescription>
+              Upload a floor plan image for your property (optional, max 5MB)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Existing Floor Plan (Edit Mode) */}
+            {mode === "edit" && existingFloorPlan && (
+              <div className="space-y-4">
+                <h4 className="font-medium">Current Floor Plan</h4>
+                <div className="relative border-2 border-gray-200 rounded-lg overflow-hidden max-w-md">
+                  <img
+                    src={existingFloorPlan}
+                    alt="Current floor plan"
+                    className="w-full h-64 object-contain bg-gray-50"
+                  />
+                  <div className="p-3">
+                    <button
+                      type="button"
+                      onClick={removeExistingFloorPlan}
+                      className="w-full p-2 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm"
+                    >
+                      Remove Current Floor Plan
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Upload New Floor Plan */}
+            {!floorPlan && !existingFloorPlan && (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-900">
+                    Upload Floor Plan
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    PNG, JPG, GIF up to 5MB
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFloorPlanUpload}
+                  className="mt-4 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+            )}
+
+            {/* New Floor Plan Preview */}
+            {floorPlan && (
+              <div className="space-y-4">
+                <h4 className="font-medium">
+                  {mode === "edit" ? "New Floor Plan" : "Floor Plan Preview"}
+                </h4>
+                <div className="relative border-2 border-gray-200 rounded-lg overflow-hidden max-w-md">
+                  <img
+                    src={URL.createObjectURL(floorPlan.file)}
+                    alt="Floor plan preview"
+                    className="w-full h-64 object-contain bg-gray-50"
+                  />
+                  <div className="p-3 space-y-2">
+                    <p className="text-sm text-gray-600 truncate">
+                      {floorPlan.name}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={removeFloorPlan}
+                      className="w-full p-2 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm"
+                    >
+                      Remove Floor Plan
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Replace Floor Plan (Edit Mode with existing) */}
+            {mode === "edit" && existingFloorPlan && !floorPlan && (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                <p className="text-sm text-gray-600 mb-2">
+                  Upload a new floor plan to replace the current one
+                </p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFloorPlanUpload}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
               </div>
             )}
           </CardContent>

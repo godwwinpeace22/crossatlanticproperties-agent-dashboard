@@ -2,7 +2,6 @@
 
 import type React from "react";
 
-import { useState } from "react";
 import Image from "next/image";
 import { Mail, MapPin, Phone } from "lucide-react";
 
@@ -15,19 +14,62 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ContactPage() {
-  const [formSubmitted, setFormSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would handle the form submission here
-    setFormSubmitted(true);
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const firstName = formData.get("first-name") as string;
+    const lastName = formData.get("last-name") as string;
+    const email = formData.get("email") as string;
+    const phone = formData.get("phone") as string;
+    const interest = formData.get("interest") as string;
+    const message = formData.get("message") as string;
+
+    const subject = `Contact Form - ${interest || "General Inquiry"}`;
+    const body = `Name: ${firstName} ${lastName}
+Email: ${email}
+Phone: ${phone || "Not provided"}
+Interest: ${interest}
+
+Message:
+${message}`;
+
+    const mailtoLink = `mailto:info@crossatlanticproperties.com?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoLink;
+  };
+
+  const handleSupportSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const email = formData.get("support-email") as string;
+    const category = formData.get("support-type") as string;
+    const subject = formData.get("support-subject") as string;
+    const details = formData.get("support-details") as string;
+
+    const emailSubject = `Support Request - ${category}: ${subject}`;
+    const body = `From: ${email}
+Category: ${category}
+Subject: ${subject}
+
+Details:
+${details}`;
+
+    const mailtoLink = `mailto:support@crossatlanticproperties.com?subject=${encodeURIComponent(
+      emailSubject
+    )}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoLink;
   };
 
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-dnx-blue text-white">
-          <div className="container px-4 md:px-6">
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-blue-500 text-white">
+          <div className="container mx-auto px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -43,7 +85,7 @@ export default function ContactPage() {
         </section>
 
         <section className="w-full py-12 md:py-16 lg:py-20">
-          <div className="container px-4 md:px-6">
+          <div className="container-custom px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
@@ -57,7 +99,7 @@ export default function ContactPage() {
                 <div className="grid gap-6">
                   <Card>
                     <CardContent className="p-6 flex items-start gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-dnx-blue text-white">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white">
                         <MapPin className="h-6 w-6" />
                       </div>
                       <div>
@@ -76,7 +118,7 @@ export default function ContactPage() {
                   </Card>
                   <Card>
                     <CardContent className="p-6 flex items-start gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-dnx-blue text-white">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white">
                         <Mail className="h-6 w-6" />
                       </div>
                       <div>
@@ -93,7 +135,7 @@ export default function ContactPage() {
                   </Card>
                   <Card>
                     <CardContent className="p-6 flex items-start gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-dnx-blue text-white">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white">
                         <Phone className="h-6 w-6" />
                       </div>
                       <div>
@@ -120,227 +162,165 @@ export default function ContactPage() {
                     value="contact"
                     className="p-4 border rounded-md mt-2"
                   >
-                    {formSubmitted ? (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 mb-4">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="h-10 w-10 text-green-600"
-                          >
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                            <polyline points="22 4 12 14.01 9 11.01" />
-                          </svg>
+                    <form onSubmit={handleContactSubmit} className="space-y-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="first-name">First name</Label>
+                          <Input
+                            id="first-name"
+                            name="first-name"
+                            placeholder="John"
+                            required
+                          />
                         </div>
-                        <h3 className="text-2xl font-bold mb-2">
-                          Message Sent!
-                        </h3>
-                        <p className="text-muted-foreground max-w-md">
-                          Thank you for reaching out. We've received your
-                          message and will get back to you as soon as possible.
-                        </p>
-                        <Button
-                          className="mt-6"
-                          onClick={() => setFormSubmitted(false)}
-                        >
-                          Send Another Message
-                        </Button>
+                        <div className="space-y-2">
+                          <Label htmlFor="last-name">Last name</Label>
+                          <Input
+                            id="last-name"
+                            name="last-name"
+                            placeholder="Doe"
+                            required
+                          />
+                        </div>
                       </div>
-                    ) : (
-                      <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <div className="space-y-2">
-                            <Label htmlFor="first-name">First name</Label>
-                            <Input
-                              id="first-name"
-                              placeholder="John"
-                              required
-                            />
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          name="email"
+                          placeholder="johndoe@example.com"
+                          type="email"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone (optional)</Label>
+                        <Input
+                          id="phone"
+                          name="phone"
+                          placeholder="+1 (555) 000-0000"
+                          type="tel"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>I am interested in:</Label>
+                        <RadioGroup
+                          name="interest"
+                          defaultValue="buying"
+                          className="flex flex-col space-y-1"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="buying" id="buying" />
+                            <Label htmlFor="buying" className="font-normal">
+                              Buying property
+                            </Label>
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="last-name">Last name</Label>
-                            <Input id="last-name" placeholder="Doe" required />
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="selling" id="selling" />
+                            <Label htmlFor="selling" className="font-normal">
+                              Selling property
+                            </Label>
                           </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            placeholder="johndoe@example.com"
-                            type="email"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">Phone (optional)</Label>
-                          <Input
-                            id="phone"
-                            placeholder="+1 (555) 000-0000"
-                            type="tel"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>I am interested in:</Label>
-                          <RadioGroup
-                            defaultValue="buying"
-                            className="flex flex-col space-y-1"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="buying" id="buying" />
-                              <Label htmlFor="buying" className="font-normal">
-                                Buying property
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="selling" id="selling" />
-                              <Label htmlFor="selling" className="font-normal">
-                                Selling property
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="renting" id="renting" />
-                              <Label htmlFor="renting" className="font-normal">
-                                Renting property
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="other" id="other" />
-                              <Label htmlFor="other" className="font-normal">
-                                Other inquiry
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="message">Message</Label>
-                          <Textarea
-                            id="message"
-                            placeholder="Please let us know how we can help you..."
-                            className="min-h-[120px]"
-                            required
-                          />
-                        </div>
-                        <Button type="submit" className="w-full">
-                          Send Message
-                        </Button>
-                      </form>
-                    )}
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="renting" id="renting" />
+                            <Label htmlFor="renting" className="font-normal">
+                              Renting property
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="other" id="other" />
+                            <Label htmlFor="other" className="font-normal">
+                              Other inquiry
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="message">Message</Label>
+                        <Textarea
+                          id="message"
+                          name="message"
+                          placeholder="Please let us know how we can help you..."
+                          className="min-h-[120px]"
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full">
+                        Send Message
+                      </Button>
+                    </form>
                   </TabsContent>
                   <TabsContent
                     value="support"
                     className="p-4 border rounded-md mt-2"
                   >
-                    {formSubmitted ? (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 mb-4">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="h-10 w-10 text-green-600"
-                          >
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                            <polyline points="22 4 12 14.01 9 11.01" />
-                          </svg>
-                        </div>
-                        <h3 className="text-2xl font-bold mb-2">
-                          Support Request Received!
-                        </h3>
-                        <p className="text-muted-foreground max-w-md">
-                          Thank you for submitting your support request. Our
-                          team will review it and respond as soon as possible.
-                        </p>
-                        <Button
-                          className="mt-6"
-                          onClick={() => setFormSubmitted(false)}
-                        >
-                          Submit Another Request
-                        </Button>
+                    <form onSubmit={handleSupportSubmit} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="support-email">Email</Label>
+                        <Input
+                          id="support-email"
+                          name="support-email"
+                          placeholder="johndoe@example.com"
+                          type="email"
+                          required
+                        />
                       </div>
-                    ) : (
-                      <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="support-email">Email</Label>
-                          <Input
-                            id="support-email"
-                            placeholder="johndoe@example.com"
-                            type="email"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="support-type">Support Category</Label>
-                          <RadioGroup
-                            defaultValue="technical"
-                            className="flex flex-col space-y-1"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="technical"
-                                id="technical"
-                              />
-                              <Label
-                                htmlFor="technical"
-                                className="font-normal"
-                              >
-                                Technical Issue
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="account" id="account" />
-                              <Label htmlFor="account" className="font-normal">
-                                Account Help
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="billing" id="billing" />
-                              <Label htmlFor="billing" className="font-normal">
-                                Billing Question
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="feedback" id="feedback" />
-                              <Label htmlFor="feedback" className="font-normal">
-                                Feedback/Suggestion
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="support-subject">Subject</Label>
-                          <Input
-                            id="support-subject"
-                            placeholder="Brief description of your issue"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="support-details">Details</Label>
-                          <Textarea
-                            id="support-details"
-                            placeholder="Please provide as much detail as possible about your issue..."
-                            className="min-h-[150px]"
-                            required
-                          />
-                        </div>
-                        <Button type="submit" className="w-full">
-                          Submit Support Request
-                        </Button>
-                      </form>
-                    )}
+                      <div className="space-y-2">
+                        <Label htmlFor="support-type">Support Category</Label>
+                        <RadioGroup
+                          name="support-type"
+                          defaultValue="technical"
+                          className="flex flex-col space-y-1"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="technical" id="technical" />
+                            <Label htmlFor="technical" className="font-normal">
+                              Technical Issue
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="account" id="account" />
+                            <Label htmlFor="account" className="font-normal">
+                              Account Help
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="billing" id="billing" />
+                            <Label htmlFor="billing" className="font-normal">
+                              Billing Question
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="feedback" id="feedback" />
+                            <Label htmlFor="feedback" className="font-normal">
+                              Feedback/Suggestion
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="support-subject">Subject</Label>
+                        <Input
+                          id="support-subject"
+                          name="support-subject"
+                          placeholder="Brief description of your issue"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="support-details">Details</Label>
+                        <Textarea
+                          id="support-details"
+                          name="support-details"
+                          placeholder="Please provide as much detail as possible about your issue..."
+                          className="min-h-[150px]"
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full">
+                        Submit Support Request
+                      </Button>
+                    </form>
                   </TabsContent>
                 </Tabs>
               </div>

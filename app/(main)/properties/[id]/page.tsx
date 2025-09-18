@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -19,10 +19,20 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import PropertyGallery from "@/components/property-gallery";
+import { PropertyDetailSkeleton } from "@/components/property-detail-skeleton";
 import { createClient } from "@/lib/supabase/client";
+import {
+  useProperty,
+  usePropertyImages,
+  useSimilarProperties,
+  useNearbyProperties,
+  useFavoriteStatus,
+} from "@/hooks/use-property-data";
 // import { InterestButton } from "@/components/interest-button";
 // import { FavoritesButton } from "@/components/favorites-button";
 // import { ContactSellerButton } from "@/components/contact-seller-button";
@@ -36,7 +46,7 @@ interface Property {
   city: string;
   state: string;
   zip_code: string;
-  property_type: string;
+  category: string;
   bedrooms?: number;
   bathrooms?: number;
   square_feet?: number;
@@ -47,6 +57,7 @@ interface Property {
   longitude?: number;
   virtual_tour_enabled?: boolean;
   property_images?: PropertyImage[];
+  floor_plan_url?: string;
 }
 
 interface PropertyImage {
@@ -62,80 +73,36 @@ export default function PropertyDetailPage({
   params: { id: string };
 }) {
   const propertyId = params.id;
+  const { toast } = useToast();
 
-  const [property, setProperty] = useState<Property | null>(null);
-  const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
-  const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
-  const [nearbyProperties, setNearbyProperties] = useState<Property[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
+  // SWR hooks for data fetching
+  const {
+    property,
+    isLoading: isLoadingProperty,
+    error: propertyError,
+  } = useProperty(propertyId);
+  const { images: propertyImages, isLoading: isLoadingImages } =
+    usePropertyImages(propertyId);
+  const { similarProperties, isLoading: isLoadingSimilar } =
+    useSimilarProperties(propertyId, property?.category || "");
+  const { nearbyProperties, isLoading: isLoadingNearby } = useNearbyProperties(
+    propertyId,
+    property?.city || ""
+  );
+  const { isFavorite, mutate: mutateFavorite } = useFavoriteStatus(propertyId);
 
-  // Fetch property data from Supabase
-  const fetchProperty = async (id: string) => {
-    try {
-      const supabase = createClient();
+  // Form state
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "I'm interested in this property...",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-      // Fetch main property data
-      const { data: propertyData, error: propertyError } = await supabase
-        .from("properties")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (propertyError) throw propertyError;
-
-      // Fetch property images
-      const { data: imagesData, error: imagesError } = await supabase
-        .from("property_images")
-        .select("*")
-        .eq("property_id", id)
-        .order("isPrimary", { ascending: false });
-
-      if (imagesError) throw imagesError;
-
-      setProperty(propertyData);
-      setPropertyImages(imagesData || []);
-
-      // Fetch similar properties (same property type, excluding current property)
-      if (propertyData) {
-        const { data: similarData, error: similarError } = await supabase
-          .from("properties")
-          .select("*, property_images!inner(*)")
-          .eq("property_type", propertyData.property_type)
-          .eq("status", "available")
-          .neq("id", id)
-          .limit(3);
-
-        if (!similarError && similarData) {
-          setSimilarProperties(similarData);
-        }
-
-        // Fetch nearby properties (same city, excluding current property)
-        const { data: nearbyData, error: nearbyError } = await supabase
-          .from("properties")
-          .select("*, property_images!inner(*)")
-          .eq("city", propertyData.city)
-          .eq("status", "available")
-          .neq("id", id)
-          .limit(3);
-
-        if (!nearbyError && nearbyData) {
-          setNearbyProperties(nearbyData);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching property:", error);
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (propertyId) {
-      fetchProperty(propertyId);
-    }
-  }, [propertyId]);
+  // Derived state
+  const isLoading = isLoadingProperty || isLoadingImages;
+  const isError = propertyError;
 
   // Helper functions to format data
   const formatPrice = (price: number) => {
@@ -149,7 +116,7 @@ export default function PropertyDetailPage({
     return new Intl.NumberFormat("en-US").format(sqft) + " sq ft";
   };
 
-  const getPropertyTypeDisplay = (status: string) => {
+  const getCategoryDisplay = (status: string) => {
     return status === "available"
       ? "For Sale"
       : status === "sold"
@@ -159,13 +126,174 @@ export default function PropertyDetailPage({
 
   // Get primary image or first image
   const getPrimaryImage = (images: PropertyImage[]) => {
-    const primary = images.find((img) => img.isPrimary);
-    return primary?.url || images[0]?.url || "/placeholder.svg";
+    const primary = images?.find((img) => img.isPrimary);
+    return primary?.url || images?.[0]?.url || "/placeholder.svg";
   };
 
   // Get all image URLs for gallery
   const getAllImageUrls = (images: PropertyImage[]) => {
-    return images.map((img) => img.url);
+    return images?.map((img) => img.url) || [];
+  };
+
+  // Handler functions for user interactions
+  const handleContactProperty = () => {
+    // Scroll to the contact form
+    const contactForm = document.getElementById("contact-form");
+    if (contactForm) {
+      contactForm.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!property) return;
+
+    try {
+      const supabase = createClient();
+
+      // Get current user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Sign in required",
+          description: "Please sign in to save properties to favorites.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (isFavorite) {
+        // Remove from favorites
+        const { error } = await supabase
+          .from("favorites")
+          .delete()
+          .eq("property_id", property.id)
+          .eq("user_id", user.id);
+
+        if (!error) {
+          mutateFavorite(false, false);
+          toast({
+            title: "Removed from favorites",
+            description: "Property removed from your favorites list.",
+          });
+        }
+      } else {
+        // Add to favorites
+        const { error } = await supabase.from("favorites").insert({
+          property_id: property.id,
+          user_id: user.id,
+        });
+
+        if (!error) {
+          mutateFavorite(true, false);
+          toast({
+            title: "Added to favorites",
+            description: "Property saved to your favorites list.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update favorites. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareProperty = async () => {
+    if (!property) return;
+
+    const shareData = {
+      title: property.title,
+      text: `Check out this amazing property: ${property.title}`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        // Use native share API if available
+        await navigator.share(shareData);
+      } else {
+        // Fallback to copying URL to clipboard
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link copied",
+          description: "Property link copied to clipboard!",
+        });
+      }
+    } catch (error) {
+      console.error("Error sharing:", error);
+      // Final fallback - copy to clipboard
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link copied",
+          description: "Property link copied to clipboard!",
+        });
+      } catch (clipboardError) {
+        console.error("Clipboard access failed:", clipboardError);
+        toast({
+          title: "Error",
+          description: "Failed to share property. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleContactFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!property) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const supabase = createClient();
+
+      // Save inquiry to database
+      const { error } = await supabase.from("property_inquiries").insert({
+        property_id: property.id,
+        name: contactForm.name,
+        email: contactForm.email,
+        phone: contactForm.phone,
+        message: contactForm.message,
+        created_at: new Date().toISOString(),
+      });
+
+      if (error) throw error;
+
+      // Reset form
+      setContactForm({
+        name: "",
+        email: "",
+        phone: "",
+        message: "I'm interested in this property...",
+      });
+
+      toast({
+        title: "Inquiry sent successfully!",
+        description: "We will contact you soon regarding this property.",
+      });
+    } catch (error) {
+      console.error("Error submitting inquiry:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send inquiry. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFormInputChange = (field: string, value: string) => {
+    setContactForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   // Loading state
@@ -173,18 +301,7 @@ export default function PropertyDetailPage({
     return (
       <div className="flex flex-col min-h-screen">
         <div className="flex-1">
-          <div className="container px-4 py-6 md:px-6 md:py-8">
-            <Button variant="ghost" size="sm" asChild className="mb-6">
-              <Link href="/properties" className="flex items-center">
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Back to Properties
-              </Link>
-            </Button>
-            <div className="flex justify-center items-center min-h-[400px]">
-              <Loader2 className="h-8 w-8 animate-spin text-dnx-blue" />
-              <span className="ml-2 text-gray-600">Loading property...</span>
-            </div>
-          </div>
+          <PropertyDetailSkeleton />
         </div>
       </div>
     );
@@ -195,7 +312,7 @@ export default function PropertyDetailPage({
     return (
       <div className="flex flex-col min-h-screen">
         <div className="flex-1">
-          <div className="container px-4 py-6 md:px-6 md:py-8">
+          <div className="container-custom py-8">
             <Button variant="ghost" size="sm" asChild className="mb-6">
               <Link href="/properties" className="flex items-center">
                 <ChevronLeft className="mr-2 h-4 w-4" />
@@ -221,7 +338,7 @@ export default function PropertyDetailPage({
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex-1">
-        <div className="container px-4 py-6 md:px-6 md:py-8">
+        <div className="container-custom py-8">
           <Button variant="ghost" size="sm" asChild className="mb-6">
             <Link href="/properties" className="flex items-center">
               <ChevronLeft className="mr-2 h-4 w-4" />
@@ -232,22 +349,17 @@ export default function PropertyDetailPage({
           <div className="grid gap-6 lg:grid-cols-3 lg:gap-12">
             <div className="lg:col-span-2">
               <div className="space-y-6">
+                <PropertyGallery
+                  images={getAllImageUrls(propertyImages || [])}
+                />
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Badge>{getPropertyTypeDisplay(property.status)}</Badge>
-                    <div className="flex items-center gap-2">
-                      {/* <FavoritesButton propertyId={property.id} /> */}
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="rounded-full"
-                      >
-                        <Share2 className="h-4 w-4" />
-                        <span className="sr-only">Share property</span>
-                      </Button>
-                    </div>
+                  <div className="">
+                    <h1 className="text-3xl text-gray-600 font-bold">
+                      {property.title}{" "}
+                    </h1>
+                    <Badge>{getCategoryDisplay(property.status)}</Badge>
                   </div>
-                  <h1 className="text-3xl font-bold">{property.title}</h1>
+
                   <div className="flex items-center text-muted-foreground">
                     <MapPin className="mr-1 h-4 w-4" />
                     <span>
@@ -256,283 +368,404 @@ export default function PropertyDetailPage({
                   </div>
                 </div>
 
-                <PropertyGallery images={getAllImageUrls(propertyImages)} />
-
-                <div className="grid gap-4 md:grid-cols-4">
-                  {property.property_type !== "land" && (
+                <div className="flex flex-wrap gap-6">
+                  {property.category !== "land" && (
                     <>
-                      <div className="flex flex-col items-center p-4 border rounded-lg">
-                        <Bed className="h-5 w-5 text-primary mb-2" />
-                        <span className="text-sm text-muted-foreground">
-                          Bedrooms
-                        </span>
-                        <span className="font-medium">
-                          {property.bedrooms || 0}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <Bed className="h-4 w-4 text-primary" />
+                        <div>
+                          <span className="text-xs text-muted-foreground block">
+                            Bedrooms
+                          </span>
+                          <span className="font-medium text-sm">
+                            {property.bedrooms || 0}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex flex-col items-center p-4 border rounded-lg">
-                        <Bath className="h-5 w-5 text-primary mb-2" />
-                        <span className="text-sm text-muted-foreground">
-                          Bathrooms
-                        </span>
-                        <span className="font-medium">
-                          {property.bathrooms || 0}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <Bath className="h-4 w-4 text-primary" />
+                        <div>
+                          <span className="text-xs text-muted-foreground block">
+                            Bathrooms
+                          </span>
+                          <span className="font-medium text-sm">
+                            {property.bathrooms || 0}
+                          </span>
+                        </div>
                       </div>
                     </>
                   )}
-                  <div className="flex flex-col items-center p-4 border rounded-lg">
-                    <Maximize className="h-5 w-5 text-primary mb-2" />
-                    <span className="text-sm text-muted-foreground">Area</span>
-                    <span className="font-medium">
-                      {formatSquareFeet(property.square_feet || 0)}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center p-4 border rounded-lg">
-                    <Calendar className="h-5 w-5 text-primary mb-2" />
-                    <span className="text-sm text-muted-foreground">
-                      Listed
-                    </span>
-                    <span className="font-medium">
-                      {new Date(property.created_at).getFullYear()}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <Maximize className="h-4 w-4 text-primary" />
+                    <div>
+                      <span className="text-xs text-muted-foreground block">
+                        Area
+                      </span>
+                      <span className="font-medium text-sm">
+                        {formatSquareFeet(property.square_feet || 0)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <Tabs defaultValue="details">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="details">Details</TabsTrigger>
-                    <TabsTrigger value="features">Features</TabsTrigger>
-                    <TabsTrigger value="neighborhood">Neighborhood</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="details" className="space-y-4 pt-4">
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2">
-                        Description
-                      </h3>
-                      <p className="text-muted-foreground">
-                        {property.description}
-                      </p>
-                    </div>
-                    <Separator />
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div>
-                        <h4 className="font-medium">Property Details</h4>
-                        <ul className="mt-2 space-y-2 text-sm">
-                          <li className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Property ID
-                            </span>
-                            <span className="font-medium">#{property.id}</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Property Type
-                            </span>
-                            <span className="font-medium">
-                              {property.property_type.charAt(0).toUpperCase() +
-                                property.property_type.slice(1)}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Property Status
-                            </span>
-                            <span className="font-medium">
-                              {getPropertyTypeDisplay(property.status)}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Listed Date
-                            </span>
-                            <span className="font-medium">
-                              {new Date(
-                                property.created_at
-                              ).toLocaleDateString()}
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-medium">Additional Details</h4>
-                        <ul className="mt-2 space-y-2 text-sm">
-                          {property.property_type !== "land" && (
-                            <>
-                              <li className="flex justify-between">
-                                <span className="text-muted-foreground">
-                                  Bedrooms
-                                </span>
-                                <span className="font-medium">
-                                  {property.bedrooms || 0}
-                                </span>
-                              </li>
-                              <li className="flex justify-between">
-                                <span className="text-muted-foreground">
-                                  Bathrooms
-                                </span>
-                                <span className="font-medium">
-                                  {property.bathrooms || 0}
-                                </span>
-                              </li>
-                            </>
-                          )}
-                          <li className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Square Feet
-                            </span>
-                            <span className="font-medium">
-                              {formatSquareFeet(property.square_feet || 0)}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Lot Size
-                            </span>
-                            <span className="font-medium">
-                              {property.lot_size
-                                ? `${property.lot_size} sq ft`
-                                : "N/A"}
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="features" className="pt-4">
-                    <h3 className="text-xl font-semibold mb-4">
-                      Property Features
-                    </h3>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
-                      <div className="flex items-center">
-                        <Home className="h-4 w-4 text-primary mr-2" />
-                        <span>
-                          {property.property_type.charAt(0).toUpperCase() +
-                            property.property_type.slice(1)}
+                {/* Property Details Section */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Description</h3>
+                    <p className="text-muted-foreground">
+                      {property.description}
+                    </p>
+                  </div>
+                  <Separator />
+                  <div>
+                    <h4 className="font-medium mb-3">Property Details</h4>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          Property Type
                         </span>
-                      </div>
-                      {property.property_type !== "land" && (
+                        <span className="font-medium">
+                          {property.category.charAt(0).toUpperCase() +
+                            property.category.slice(1)}
+                        </span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          Property Status
+                        </span>
+                        <span className="font-medium">
+                          {getCategoryDisplay(property.status)}
+                        </span>
+                      </li>
+                      {property.category !== "land" && (
                         <>
-                          <div className="flex items-center">
-                            <Home className="h-4 w-4 text-primary mr-2" />
-                            <span>{property.bedrooms || 0} Bedrooms</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Home className="h-4 w-4 text-primary mr-2" />
-                            <span>{property.bathrooms || 0} Bathrooms</span>
-                          </div>
+                          <li className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Bedrooms
+                            </span>
+                            <span className="font-medium">
+                              {property.bedrooms || 0}
+                            </span>
+                          </li>
+                          <li className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Bathrooms
+                            </span>
+                            <span className="font-medium">
+                              {property.bathrooms || 0}
+                            </span>
+                          </li>
                         </>
                       )}
-                      <div className="flex items-center">
-                        <Home className="h-4 w-4 text-primary mr-2" />
-                        <span>
+                      <li className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          Square Feet
+                        </span>
+                        <span className="font-medium">
                           {formatSquareFeet(property.square_feet || 0)}
                         </span>
-                      </div>
-                      {property.lot_size && (
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-muted-foreground">Lot Size</span>
+                        <span className="font-medium">
+                          {property.lot_size
+                            ? `${property.lot_size} sq ft`
+                            : "N/A"}
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Property Features Section */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold mb-4">
+                    Property Features
+                  </h3>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+                    <div className="flex items-center">
+                      <Home className="h-4 w-4 text-primary mr-2" />
+                      <span>
+                        {property.category.charAt(0).toUpperCase() +
+                          property.category.slice(1)}
+                      </span>
+                    </div>
+                    {property.category !== "land" && (
+                      <>
                         <div className="flex items-center">
                           <Home className="h-4 w-4 text-primary mr-2" />
-                          <span>{property.lot_size} sq ft lot</span>
+                          <span>{property.bedrooms || 0} Bedrooms</span>
                         </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="neighborhood" className="space-y-4 pt-4">
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2">
-                        Neighborhood
-                      </h3>
-                      <p className="text-muted-foreground">
-                        {property.city}, {property.state} {property.zip_code}
-                      </p>
-                      <p className="text-muted-foreground mt-2">
-                        Full address: {property.address}
-                      </p>
-                    </div>
-                    <Separator />
-                    {property.latitude && property.longitude && (
-                      <div className="aspect-video overflow-hidden rounded-lg border">
-                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                          <p className="text-gray-500">
-                            Map view would be displayed here
-                          </p>
-                          <p className="text-xs text-gray-400 ml-2">
-                            ({property.latitude}, {property.longitude})
-                          </p>
+                        <div className="flex items-center">
+                          <Home className="h-4 w-4 text-primary mr-2" />
+                          <span>{property.bathrooms || 0} Bathrooms</span>
                         </div>
+                      </>
+                    )}
+                    <div className="flex items-center">
+                      <Home className="h-4 w-4 text-primary mr-2" />
+                      <span>{formatSquareFeet(property.square_feet || 0)}</span>
+                    </div>
+                    {property.lot_size && (
+                      <div className="flex items-center">
+                        <Home className="h-4 w-4 text-primary mr-2" />
+                        <span>{property.lot_size} sq ft lot</span>
                       </div>
                     )}
-                  </TabsContent>
-                </Tabs>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Floor Plan Section */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold mb-4">Floor Plan</h3>
+                  {property.floor_plan_url ? (
+                    <div className="w-full">
+                      <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                        <Image
+                          src={property.floor_plan_url}
+                          alt="Property floor plan"
+                          width={800}
+                          height={600}
+                          className="w-full h-auto max-h-[600px] object-contain"
+                          priority={false}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2 text-center">
+                        Click image to view full size
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg">
+                      <div className="text-gray-400 mb-2">
+                        <Home className="h-12 w-12 mx-auto mb-4" />
+                      </div>
+                      <h4 className="text-lg font-medium text-gray-900 mb-2">
+                        No Floor Plan Available
+                      </h4>
+                      <p className="text-gray-600">
+                        The floor plan for this property has not been uploaded
+                        yet.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Map Section */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Location</h3>
+                    <p className="text-muted-foreground">{property.address}</p>
+                    <p className="text-muted-foreground mt-1">
+                      {property.city}, {property.state} {property.zip_code}
+                    </p>
+                  </div>
+
+                  {property.latitude && property.longitude ? (
+                    <div className="aspect-video overflow-hidden rounded-lg border">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        loading="lazy"
+                        allowFullScreen
+                        referrerPolicy="no-referrer-when-downgrade"
+                        src={`https://www.google.com/maps/embed/v1/view?key=${
+                          process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+                          "YOUR_API_KEY"
+                        }&center=${property.latitude},${
+                          property.longitude
+                        }&zoom=15&maptype=roadmap`}
+                        title="Property Location Map"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-video overflow-hidden rounded-lg border">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        loading="lazy"
+                        allowFullScreen
+                        referrerPolicy="no-referrer-when-downgrade"
+                        src={`https://www.google.com/maps/embed/v1/search?key=${
+                          process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+                          "YOUR_API_KEY"
+                        }&q=${encodeURIComponent(
+                          property.address +
+                            ", " +
+                            property.city +
+                            ", " +
+                            property.state
+                        )}&zoom=15`}
+                        title="Property Location Map"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center text-muted-foreground">
+                      <MapPin className="mr-2 h-4 w-4" />
+                      <span>Interactive map showing property location</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const mapUrl =
+                          property.latitude && property.longitude
+                            ? `https://www.google.com/maps/search/?api=1&query=${property.latitude},${property.longitude}`
+                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                property.address +
+                                  ", " +
+                                  property.city +
+                                  ", " +
+                                  property.state
+                              )}`;
+                        window.open(mapUrl, "_blank");
+                      }}
+                    >
+                      Open in Google Maps
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="space-y-6">
-              <div className="rounded-lg border p-4">
+              {/* Price Card */}
+              <div className="rounded-lg border border-gray-200 p-6 bg-white">
                 <div className="text-center mb-4">
                   <h2 className="text-3xl font-bold text-primary">
                     {formatPrice(property.price)}
                   </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {property.category === "land" ? "Per plot" : "Total price"}
+                  </p>
                 </div>
-                {/* <Separator className="my-4" />
-                <div className="space-y-4">
-                  {property.agent ? (
-                    <>
-                      <div className="flex items-center">
-                        <div className="mr-4">
-                          <div className="w-16 h-16 bg-dnx-blue text-white rounded-full flex items-center justify-center">
-                            {property.agent.name.charAt(0)}
-                          </div>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">
-                            {property.agent.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Real Estate Agent
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {property.agent.email}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button variant="outline" className="w-full">
-                          Call Agent
-                        </Button>
-                        <Button variant="outline" className="w-full">
-                          Email
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center">
-                      <p className="text-muted-foreground">
-                        Contact information not available
-                      </p>
-                    </div>
-                  )}
-                </div> */}
+
+                <div className="space-y-3">
+                  <Button
+                    className="w-full bg-blue-500 hover:bg-blue-500/90 cursor-pointer"
+                    size="lg"
+                    onClick={handleContactProperty}
+                  >
+                    Contact About This Property
+                  </Button>
+                </div>
               </div>
-              {/* <InterestButton
-                propertyId={property.id}
-                propertyPrice={Number(property.price)}
-                agentId={property.agent?.id!}
-                propertyTitle={property?.title}
-                className="rounded-lg border"
-              /> */}
+
+              {/* Quick Actions */}
+              <div className="rounded-lg border border-gray-200 p-6 bg-white">
+                <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+                <div className="space-y-3">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={handleToggleFavorite}
+                  >
+                    <Heart
+                      className={`mr-2 h-4 w-4 ${
+                        isFavorite ? "fill-red-500 text-red-500" : ""
+                      }`}
+                    />
+                    {isFavorite ? "Remove from Favorites" : "Save to Favorites"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={handleShareProperty}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share Property
+                  </Button>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div
+                id="contact-form"
+                className="rounded-lg border border-gray-200 p-6 bg-white"
+              >
+                <h3 className="text-lg font-semibold mb-4">
+                  Get More Information
+                </h3>
+                <form onSubmit={handleContactFormSubmit} className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Your Name</label>
+                    <Input
+                      type="text"
+                      className="mt-1"
+                      placeholder="Enter your name"
+                      value={contactForm.name}
+                      onChange={(e) =>
+                        handleFormInputChange("name", e.target.value)
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Email</label>
+                    <Input
+                      type="email"
+                      className="mt-1"
+                      placeholder="Enter your email"
+                      value={contactForm.email}
+                      onChange={(e) =>
+                        handleFormInputChange("email", e.target.value)
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Phone</label>
+                    <Input
+                      type="tel"
+                      className="mt-1"
+                      placeholder="Enter your phone"
+                      value={contactForm.phone}
+                      onChange={(e) =>
+                        handleFormInputChange("phone", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Message</label>
+                    <Textarea
+                      className="mt-1"
+                      rows={3}
+                      placeholder="I'm interested in this property..."
+                      value={contactForm.message}
+                      onChange={(e) =>
+                        handleFormInputChange("message", e.target.value)
+                      }
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Sending..." : "Send Inquiry"}
+                  </Button>
+                </form>
+              </div>
             </div>
           </div>
 
           {/* Similar Properties Section */}
-          {similarProperties.length > 0 && (
+          {similarProperties && similarProperties.length > 0 && (
             <div className="mt-12">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">Similar Properties</h2>
                 <Button variant="outline" asChild>
-                  <Link
-                    href={`/properties?propertyType=${property.property_type}`}
-                  >
+                  <Link href={`/properties?category=${property?.category}`}>
                     View More
                   </Link>
                 </Button>
@@ -553,7 +786,7 @@ export default function PropertyDetailPage({
                         />
                         <div className="absolute top-3 left-3">
                           <Badge className="bg-dnx-orange text-white">
-                            {getPropertyTypeDisplay(similarProp.status)}
+                            {getCategoryDisplay(similarProp.status)}
                           </Badge>
                         </div>
                         <div className="absolute top-3 right-3">
@@ -566,7 +799,7 @@ export default function PropertyDetailPage({
                           </Button>
                         </div>
                       </div>
-                      <div className="p-4 space-y-2">
+                      <div className="p-4 px-0 space-y-2">
                         <div className="flex items-center justify-between">
                           <h3 className="font-semibold text-lg group-hover:text-dnx-blue transition-colors">
                             {similarProp.title}
@@ -581,8 +814,8 @@ export default function PropertyDetailPage({
                             {similarProp.city}, {similarProp.state}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          {similarProp.property_type !== "land" && (
+                        {/* <div className="flex items-center space-x-4 text-sm text-gray-500">
+                          {similarProp.category !== "land" && (
                             <>
                               <div className="flex items-center">
                                 <Bed className="h-4 w-4 mr-1" />
@@ -600,7 +833,7 @@ export default function PropertyDetailPage({
                               {formatSquareFeet(similarProp.square_feet || 0)}
                             </span>
                           </div>
-                        </div>
+                        </div> */}
                       </div>
                     </Link>
                   </div>
@@ -610,13 +843,13 @@ export default function PropertyDetailPage({
           )}
 
           {/* Nearby Properties Section */}
-          {nearbyProperties.length > 0 && (
+          {nearbyProperties && nearbyProperties.length > 0 && (
             <div className="mt-12">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">Nearby Properties</h2>
                 <Button variant="outline" asChild>
                   <Link
-                    href={`/properties?city=${property.city}&state=${property.state}`}
+                    href={`/properties?city=${property?.city}&state=${property?.state}`}
                   >
                     View More
                   </Link>
@@ -638,7 +871,7 @@ export default function PropertyDetailPage({
                         />
                         <div className="absolute top-3 left-3">
                           <Badge className="bg-dnx-orange text-white">
-                            {getPropertyTypeDisplay(nearbyProp.status)}
+                            {getCategoryDisplay(nearbyProp.status)}
                           </Badge>
                         </div>
                         <div className="absolute top-3 right-3">
@@ -667,7 +900,7 @@ export default function PropertyDetailPage({
                           </span>
                         </div>
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          {nearbyProp.property_type !== "land" && (
+                          {nearbyProp.category !== "land" && (
                             <>
                               <div className="flex items-center">
                                 <Bed className="h-4 w-4 mr-1" />

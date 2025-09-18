@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Play,
@@ -37,8 +38,9 @@ const stats = [
 export default function EnhancedHeroSection() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [propertyType, setPropertyType] = useState("any");
+  const [category, setCategory] = useState("any");
   const [listingType, setListingType] = useState("buy");
+  const router = useRouter();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -48,8 +50,28 @@ export default function EnhancedHeroSection() {
   }, []);
 
   const handleSearch = () => {
-    // Implement search functionality
-    console.log("Searching for:", { searchQuery, propertyType, listingType });
+    // Build search parameters to match what the properties page expects
+    const params = new URLSearchParams();
+
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim());
+    }
+
+    if (category && category !== "any") {
+      params.set("category", category);
+    }
+
+    // Map listing type to purpose that the properties page expects
+    if (listingType === "buy") {
+      params.set("purpose", "sale");
+    } else if (listingType === "rent") {
+      params.set("purpose", "rent");
+    }
+
+    // Navigate to properties page with search parameters
+    const queryString = params.toString();
+    const url = queryString ? `/properties?${queryString}` : "/properties";
+    router.push(url);
   };
 
   return (
@@ -77,31 +99,32 @@ export default function EnhancedHeroSection() {
 
       {/* Floating Elements */}
       <div className="absolute inset-0 z-10">
-        <div className="absolute top-20 left-10 w-20 h-20 bg-dnx-orange/20 rounded-full animate-float" />
+        <div className="absolute top-20 left-10 w-20 h-20 bg-orange-500/20 rounded-full animate-float" />
         <div
-          className="absolute top-40 right-20 w-16 h-16 bg-dnx-blue/20 rounded-full animate-float"
+          className="absolute top-40 right-20 w-16 h-16 bg-blue-500/20 rounded-full animate-float"
           style={{ animationDelay: "1s" }}
         />
         <div
-          className="absolute bottom-40 left-20 w-12 h-12 bg-dnx-orange/30 rounded-full animate-float"
+          className="absolute bottom-40 left-20 w-12 h-12 bg-orange-500/30 rounded-full animate-float"
           style={{ animationDelay: "2s" }}
         />
       </div>
 
       {/* Main Content */}
-      <div className="relative z-20 container-custom text-center text-white">
+      <div className="relative z-20 container-custom text-center text-white py-5 md:py-0">
         <div className="max-w-5xl mx-auto space-y-8">
           {/* Main Heading */}
           <div className="space-y-6 animate-fade-in">
             <h1 className="text-5xl md:text-7xl lg:text-6xl font-display font-bold leading-tight">
-              Discover Your
-              <span className="block bg-gradient-to-r from-dnx-orange to-yellow-400 bg-clip-text text-transparent">
-                Dream Property
+              Find Your
+              <span className="block bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
+                Dream Home
               </span>
             </h1>
             <p className="text-sm md:text-lg lg:text-lg font-light max-w-3xl mx-auto leading-relaxed">
-              Experience the future of real estate with immersive virtual tours
-              and AI-powered property matching across Africa
+              Discover premium properties across Africa with intelligent
+              matching technology that connects you to your perfect home or
+              investment opportunity
             </p>
           </div>
 
@@ -123,7 +146,7 @@ export default function EnhancedHeroSection() {
                   </SelectContent>
                 </Select>
 
-                <Select value={propertyType} onValueChange={setPropertyType}>
+                <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger className="form-select text-gray-900">
                     <SelectValue placeholder="Property Type" />
                   </SelectTrigger>
@@ -143,6 +166,7 @@ export default function EnhancedHeroSection() {
                     placeholder="Location or Property ID"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                     className="form-input pl-10 text-gray-900"
                   />
                 </div>
@@ -150,7 +174,8 @@ export default function EnhancedHeroSection() {
 
               <Button
                 onClick={handleSearch}
-                className="w-full btn-primary text-lg py-4 rounded-xl"
+                className="w-full bg-blue-500 hover:bg-blue-500/90 text-lg py-4 rounded-xl cursor-pointer"
+                size={"lg"}
               >
                 <Search className="mr-2 h-5 w-5" />
                 Search Properties
@@ -175,18 +200,6 @@ export default function EnhancedHeroSection() {
             ))}
           </div>
         </div>
-      </div>
-
-      {/* Video Background Option */}
-      <div className="absolute bottom-8 right-8 z-30">
-        <Button
-          variant="outline"
-          size="sm"
-          className="glass-effect border-white/30 text-white hover:bg-white/20"
-        >
-          <Play className="h-4 w-4 mr-2" />
-          Watch Demo
-        </Button>
       </div>
 
       {/* Scroll Indicator */}

@@ -33,7 +33,7 @@ interface Property {
   title: string;
   description: string;
   price: string;
-  propertyType: string;
+  category: string;
   purpose: string;
   status: string;
   bedrooms: number;
@@ -324,9 +324,7 @@ export default function ViewListingPage() {
                 )}
                 <div>
                   <p className="text-sm text-gray-500">Property Type</p>
-                  <p className="font-semibold capitalize">
-                    {listing.propertyType}
-                  </p>
+                  <p className="font-semibold capitalize">{listing.category}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Purpose</p>
@@ -407,9 +405,9 @@ export default function ViewListingPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">
-                {new Intl.NumberFormat("en-US", {
+                {new Intl.NumberFormat("en-NG", {
                   style: "currency",
-                  currency: "USD",
+                  currency: "NGN",
                   maximumFractionDigits: 0,
                 }).format(Number(listing.price))}
               </CardTitle>
