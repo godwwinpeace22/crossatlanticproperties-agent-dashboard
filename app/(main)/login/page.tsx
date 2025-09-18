@@ -137,11 +137,11 @@ export default function LoginPage() {
           </div>
           <div className="relative aspect-video overflow-hidden rounded-xl">
             <Image
-              src="/placeholder.svg?height=800&width=1200"
+              src="/about1.jpg?height=800&width=1200"
               width={1200}
               height={800}
               alt="Login"
-              className="object-cover"
+              className="object-cover object-center"
             />
           </div>
         </div>

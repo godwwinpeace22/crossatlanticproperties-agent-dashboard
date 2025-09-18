@@ -140,7 +140,7 @@ export default function EnhancedHeroSection() {
                 {/* Listing Type */}
                 <div className="lg:w-32">
                   <Select value={listingType} onValueChange={setListingType}>
-                    <SelectTrigger className="form-select text-gray-900 h-12 border-0 bg-white/90 hover:bg-white focus:bg-white">
+                    <SelectTrigger className="form-select text-gray-900 h-20 border-0 bg-white/90 hover:bg-white focus:bg-white">
                       <SelectValue placeholder="Buy/Rent" />
                     </SelectTrigger>
                     <SelectContent>
@@ -154,7 +154,7 @@ export default function EnhancedHeroSection() {
                 {/* Property Type */}
                 <div className="lg:w-40">
                   <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger className="form-select text-gray-900 h-12 border-0 bg-white/90 hover:bg-white focus:bg-white">
+                    <SelectTrigger className="form-select text-gray-900 h-20 border-0 bg-white/90 hover:bg-white focus:bg-white">
                       <SelectValue placeholder="Property Type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -176,16 +176,16 @@ export default function EnhancedHeroSection() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="form-input pl-12 pr-4 h-12 text-gray-900 border-0 bg-white/90 hover:bg-white focus:bg-white placeholder:text-gray-500"
+                    className="form-input pl-12 pr-4 h- text-gray-900 border-0 bg-white/90 hover:bg-white focus:bg-white placeholder:text-gray-500"
                   />
                 </div>
 
                 {/* Search Button */}
                 <Button
                   onClick={handleSearch}
-                  className="bg-orange-500 hover:bg-orange-600 text-white h-12 px-8 rounded-xl font-semibold transition-all duration-200 hover:scale-105 lg:w-auto w-full"
+                  className="bg-orange-500 hover:bg-orange-600 text-white shadow-xl px-8 rounded-xl font-semibold transition-all duration-200 hover:scale-105 lg:w-auto w-full"
                 >
-                  <Search className="mr-2 h-5 w-5" />
+                  {/* <Search className="mr-2 h-5 w-5" /> */}
                   <span className="hidden sm:inline">Search Properties</span>
                   <span className="sm:hidden">Search</span>
                 </Button>
