@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CommissionSettings } from "@/components/commission-settings";
 import { PropertyTypesManager } from "@/components/property-types-manager";
+import { LocationsManager } from "@/components/locations-manager";
 import {
   Card,
   CardContent,
@@ -47,6 +48,8 @@ export default async function AdminSettingsPage() {
       <CommissionSettings settings={commissionSettings || []} />
 
       <PropertyTypesManager />
+
+      <LocationsManager />
 
       <Card>
         <CardHeader>

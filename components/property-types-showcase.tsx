@@ -38,7 +38,7 @@ export function PropertyTypesShowcase() {
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-6xl font-display font-bold mb-6">
-              <span className="gradient-text">Property Types</span>
+              <span className="gradient-text">Estates</span>
             </h2>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -64,7 +64,7 @@ export function PropertyTypesShowcase() {
       <div className="container-custom">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-6xl font-display font-bold mb-6">
-            <span className="gradient-text">Property Types</span>
+            <span className="gradient-text">Estates</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Discover different types of properties available in our network of

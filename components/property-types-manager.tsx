@@ -44,6 +44,7 @@ interface CustomImageFile {
 export function PropertyTypesManager() {
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<PropertyType | null>(null);
   const [formData, setFormData] = useState({
@@ -158,6 +159,7 @@ export function PropertyTypesManager() {
     setSelectedImage(null);
     setExistingImageUrl(null);
     setEditingType(null);
+    setIsSubmitting(false);
     setIsDialogOpen(false);
   };
 
@@ -172,6 +174,8 @@ export function PropertyTypesManager() {
       });
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const supabase = createClient();
@@ -243,6 +247,8 @@ export function PropertyTypesManager() {
         description: error.message || "Failed to save property type",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -471,8 +477,15 @@ export function PropertyTypesManager() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit">
-                    {editingType ? "Update" : "Create"} Property Type
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        {editingType ? "Updating..." : "Creating..."}
+                      </>
+                    ) : (
+                      <>{editingType ? "Update" : "Create"} Property Type</>
+                    )}
                   </Button>
                 </DialogFooter>
               </form>

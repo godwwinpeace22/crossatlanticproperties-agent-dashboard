@@ -14,7 +14,7 @@ interface Property {
   bedrooms?: number;
   bathrooms?: number;
   square_feet?: number;
-  lot_size?: number;
+  lotSize?: number;
   status: string;
   created_at: string;
   latitude?: number;

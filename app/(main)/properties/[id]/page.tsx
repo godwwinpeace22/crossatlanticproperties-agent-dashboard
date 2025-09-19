@@ -6,15 +6,12 @@ import Link from "next/link";
 import {
   Bath,
   Bed,
-  Calendar,
   ChevronLeft,
-  Eye,
   Heart,
   Home,
   MapPin,
   Maximize,
   Share2,
-  Loader2,
   Phone,
 } from "lucide-react";
 
@@ -34,32 +31,6 @@ import {
   useNearbyProperties,
   useFavoriteStatus,
 } from "@/hooks/use-property-data";
-// import { InterestButton } from "@/components/interest-button";
-// import { FavoritesButton } from "@/components/favorites-button";
-// import { ContactSellerButton } from "@/components/contact-seller-button";
-
-interface Property {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  address: string;
-  city: string;
-  state: string;
-  zip_code: string;
-  category: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  square_feet?: number;
-  lot_size?: number;
-  status: string;
-  created_at: string;
-  latitude?: number;
-  longitude?: number;
-  virtual_tour_enabled?: boolean;
-  property_images?: PropertyImage[];
-  floor_plan_url?: string;
-}
 
 interface PropertyImage {
   id: number;
@@ -114,7 +85,7 @@ export default function PropertyDetailPage({
   };
 
   const formatSquareFeet = (sqft: number) => {
-    return new Intl.NumberFormat("en-US").format(sqft) + " sq ft";
+    return new Intl.NumberFormat("en-US").format(sqft) + " sqm";
   };
 
   const getCategoryDisplay = (status: string) => {
@@ -460,7 +431,7 @@ export default function PropertyDetailPage({
                       )}
                       <li className="flex justify-between">
                         <span className="text-muted-foreground">
-                          Square Feet
+                          Floor Area
                         </span>
                         <span className="font-medium">
                           {formatSquareFeet(property.square_feet || 0)}
@@ -469,9 +440,7 @@ export default function PropertyDetailPage({
                       <li className="flex justify-between">
                         <span className="text-muted-foreground">Lot Size</span>
                         <span className="font-medium">
-                          {property.lot_size
-                            ? `${property.lot_size} sq ft`
-                            : "N/A"}
+                          {property.lotSize ? `${property.lotSize} sqm` : "N/A"}
                         </span>
                       </li>
                     </ul>
@@ -509,10 +478,10 @@ export default function PropertyDetailPage({
                       <Home className="h-4 w-4 text-primary mr-2" />
                       <span>{formatSquareFeet(property.square_feet || 0)}</span>
                     </div>
-                    {property.lot_size && (
+                    {property.lotSize && (
                       <div className="flex items-center">
                         <Home className="h-4 w-4 text-primary mr-2" />
-                        <span>{property.lot_size} sq ft lot</span>
+                        <span>{property.lotSize} sqm</span>
                       </div>
                     )}
                   </div>
@@ -535,9 +504,6 @@ export default function PropertyDetailPage({
                           priority={false}
                         />
                       </div>
-                      <p className="text-sm text-muted-foreground mt-2 text-center">
-                        Click image to view full size
-                      </p>
                     </div>
                   ) : (
                     <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg">
@@ -547,10 +513,6 @@ export default function PropertyDetailPage({
                       <h4 className="text-lg font-medium text-gray-900 mb-2">
                         No Floor Plan Available
                       </h4>
-                      <p className="text-gray-600">
-                        The floor plan for this property has not been uploaded
-                        yet.
-                      </p>
                     </div>
                   )}
                 </div>
@@ -567,7 +529,7 @@ export default function PropertyDetailPage({
                     </p>
                   </div>
 
-                  {property.latitude && property.longitude ? (
+                  {property.latitude && property.longitude && (
                     <div className="aspect-video overflow-hidden rounded-lg border">
                       <iframe
                         width="100%"
@@ -576,64 +538,30 @@ export default function PropertyDetailPage({
                         loading="lazy"
                         allowFullScreen
                         referrerPolicy="no-referrer-when-downgrade"
-                        src={`https://www.google.com/maps/embed/v1/view?key=${
-                          process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-                          "YOUR_API_KEY"
-                        }&center=${property.latitude},${
-                          property.longitude
-                        }&zoom=15&maptype=roadmap`}
-                        title="Property Location Map"
-                      />
-                    </div>
-                  ) : (
-                    <div className="aspect-video overflow-hidden rounded-lg border">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        style={{ border: 0 }}
-                        loading="lazy"
-                        allowFullScreen
-                        referrerPolicy="no-referrer-when-downgrade"
-                        src={`https://www.google.com/maps/embed/v1/search?key=${
-                          process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-                          "YOUR_API_KEY"
-                        }&q=${encodeURIComponent(
-                          property.address +
-                            ", " +
-                            property.city +
-                            ", " +
-                            property.state
-                        )}&zoom=15`}
+                        src={`https://maps.google.com/maps?q=${property.latitude},${property.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                         title="Property Location Map"
                       />
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center text-muted-foreground">
-                      <MapPin className="mr-2 h-4 w-4" />
-                      <span>Interactive map showing property location</span>
+                  {property.latitude && property.longitude && (
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center text-muted-foreground">
+                        <MapPin className="mr-2 h-4 w-4" />
+                        <span>Interactive map showing property location</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const mapUrl = `https://www.google.com/maps/search/?api=1&query=${property.latitude},${property.longitude}`;
+                          window.open(mapUrl, "_blank");
+                        }}
+                      >
+                        Open in Google Maps
+                      </Button>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const mapUrl =
-                          property.latitude && property.longitude
-                            ? `https://www.google.com/maps/search/?api=1&query=${property.latitude},${property.longitude}`
-                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                property.address +
-                                  ", " +
-                                  property.city +
-                                  ", " +
-                                  property.state
-                              )}`;
-                        window.open(mapUrl, "_blank");
-                      }}
-                    >
-                      Open in Google Maps
-                    </Button>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>

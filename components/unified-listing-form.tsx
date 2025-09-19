@@ -51,6 +51,9 @@ interface FormData {
   yearBuilt: string;
   garageSpaces: string;
   amenities: string[];
+  latitude: string;
+  longitude: string;
+  locationId: string;
   status?: string; // Only for editing
 }
 
@@ -105,6 +108,9 @@ const initialFormData: FormData = {
   yearBuilt: "",
   garageSpaces: "",
   amenities: [],
+  latitude: "",
+  longitude: "",
+  locationId: "",
   status: "active",
 };
 
@@ -162,6 +168,9 @@ export default function UnifiedListingForm({
     purpose: "",
     yearBuilt: "",
     garageSpaces: "",
+    latitude: "",
+    longitude: "",
+    locationId: "",
     amenities: [] as string[],
   });
   const [images, setImages] = useState<ImageFile[]>([]);
@@ -174,6 +183,32 @@ export default function UnifiedListingForm({
   const [isLoading, setIsLoading] = useState(mode === "edit");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Location management state
+  const [locations, setLocations] = useState<
+    Array<{ id: string; name: string; country: string }>
+  >([]);
+
+  // Load locations on component mount
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("locations")
+          .select("id, name, country")
+          .eq("is_active", true)
+          .order("name");
+
+        if (error) throw error;
+        setLocations(data || []);
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+      }
+    };
+
+    fetchLocations();
+  }, []);
 
   // Load existing listing data for edit mode
   useEffect(() => {
@@ -224,6 +259,9 @@ export default function UnifiedListingForm({
             purpose: property.purpose || "",
             yearBuilt: property.yearBuilt?.toString() || "",
             garageSpaces: property.garageSpaces?.toString() || "",
+            latitude: property.latitude?.toString() || "",
+            longitude: property.longitude?.toString() || "",
+            locationId: property.location_id || "",
             amenities: property.amenities ? JSON.parse(property.amenities) : [],
           });
 
@@ -413,13 +451,29 @@ export default function UnifiedListingForm({
     if (formData.description.length < 50)
       return "Description must be at least 50 characters";
     if (!formData.address.trim()) return "Address is required";
-    if (!formData.city.trim()) return "City is required";
+    if (!formData.locationId.trim()) return "Location is required";
     if (!formData.state.trim()) return "State is required";
     if (!formData.zipCode.trim()) return "ZIP code is required";
     if (!formData.price || parseFloat(formData.price) <= 0)
       return "Valid price is required";
     if (!formData.category) return "Property type is required";
     if (!formData.purpose) return "Purpose (sale/rent) is required";
+
+    // GPS coordinates validation (optional but if provided, must be valid)
+    if (
+      formData.latitude &&
+      (parseFloat(formData.latitude) < -90 ||
+        parseFloat(formData.latitude) > 90)
+    ) {
+      return "Latitude must be between -90 and 90";
+    }
+    if (
+      formData.longitude &&
+      (parseFloat(formData.longitude) < -180 ||
+        parseFloat(formData.longitude) > 180)
+    ) {
+      return "Longitude must be between -180 and 180";
+    }
 
     // These fields are not required for land properties
     const isLandProperty = formData.category === "land";
@@ -665,11 +719,14 @@ export default function UnifiedListingForm({
         bathrooms: formData.bathrooms ? parseFloat(formData.bathrooms) : null,
         // sqft: formData.sqft ? parseInt(formData.sqft) : null,
         squareFeet: formData.sqft ? parseInt(formData.sqft) : null,
-        lotSize: formData.lotSize ? parseInt(formData.lotSize) : null,
+        lotSize: formData.lotSize ? parseFloat(formData.lotSize) : null,
         yearBuilt: formData.yearBuilt ? parseInt(formData.yearBuilt) : null,
         garageSpaces: formData.garageSpaces
           ? parseInt(formData.garageSpaces)
           : null,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        location_id: formData.locationId || null,
         amenities: JSON.stringify(formData.amenities || []),
         floor_plan_url: null, // Will be updated after floor plan upload
       };
@@ -987,13 +1044,34 @@ export default function UnifiedListingForm({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="city">City *</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange("city", e.target.value)}
-                  placeholder="City"
-                />
+                <Label htmlFor="location">Location *</Label>
+                <Select
+                  value={formData.locationId}
+                  onValueChange={(value) => {
+                    handleInputChange("locationId", value);
+                    // Auto-populate city from selected location
+                    const selectedLocation = locations.find(
+                      (loc) => loc.id === value
+                    );
+                    if (selectedLocation) {
+                      handleInputChange("city", selectedLocation.name);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}, {location.country}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Don't see your location? Contact admin to add it.
+                </p>
               </div>
 
               <div>
@@ -1013,6 +1091,44 @@ export default function UnifiedListingForm({
                   value={formData.zipCode}
                   onChange={(e) => handleInputChange("zipCode", e.target.value)}
                   placeholder="12345"
+                />
+              </div>
+            </div>
+
+            {/* GPS Coordinates */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="latitude">Latitude (GPS)</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  value={formData.latitude}
+                  onChange={(e) =>
+                    handleInputChange("latitude", e.target.value)
+                  }
+                  placeholder="e.g., 9.0765"
+                  step="any"
+                  min="-90"
+                  max="90"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Optional GPS coordinate for precise location
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="longitude">Longitude (GPS)</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  value={formData.longitude}
+                  onChange={(e) =>
+                    handleInputChange("longitude", e.target.value)
+                  }
+                  placeholder="e.g., 7.3986"
+                  step="any"
+                  min="-180"
+                  max="180"
                 />
               </div>
             </div>
@@ -1126,8 +1242,8 @@ export default function UnifiedListingForm({
               <div>
                 <Label htmlFor="lotSize">
                   {formData.category === "land"
-                    ? "Land Size (sq ft) *"
-                    : "Lot Size (sq ft)"}
+                    ? "Land Size (sqm) *"
+                    : "Lot Size (sqm)"}
                 </Label>
                 <Input
                   id="lotSize"
@@ -1137,6 +1253,9 @@ export default function UnifiedListingForm({
                   placeholder="0"
                   min="0"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Size in square meters (sqm)
+                </p>
               </div>
 
               {formData.category !== "land" && (

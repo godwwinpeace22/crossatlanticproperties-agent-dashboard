@@ -124,7 +124,7 @@ export function PropertyCard({ property, viewMode }: PropertyCardProps) {
           {property.category === "land" && (
             <div className="flex items-center">
               <Maximize className="h-4 w-4 mr-1" />
-              <span>{property?.lotSize} sq ft</span>
+              <span>{property?.lotSize} sqm</span>
             </div>
           )}
         </div>

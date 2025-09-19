@@ -73,23 +73,52 @@ export default function PropertiesPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedPropertyType, setSelectedPropertyType] = useState("all");
   const [selectedPurpose, setSelectedPurpose] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedBeds, setSelectedBeds] = useState("all");
   const [priceRange, setPriceRange] = useState([0, 3000000]);
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Locations state
+  const [locations, setLocations] = useState<
+    Array<{ id: string; name: string; country: string }>
+  >([]);
+
+  // Load locations on component mount
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("locations")
+          .select("id, name, country")
+          .eq("is_active", true)
+          .order("name");
+
+        if (error) throw error;
+        setLocations(data || []);
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
   // Initialize filters from URL params
   useEffect(() => {
     const category = searchParams.get("category");
     const purpose = searchParams.get("purpose");
     const propertyType = searchParams.get("propertyType");
+    const location = searchParams.get("location");
     const search = searchParams.get("search");
 
     if (category && category !== "all") setSelectedCategory(category);
     if (purpose && purpose !== "all") setSelectedPurpose(purpose);
     if (propertyType && propertyType !== "all")
       setSelectedPropertyType(propertyType);
+    if (location && location !== "all") setSelectedLocation(location);
     if (search) setSearchQuery(search);
   }, [searchParams]);
 
@@ -115,6 +144,7 @@ export default function PropertiesPage() {
       selectedCategory,
       selectedPropertyType,
       selectedPurpose,
+      selectedLocation,
       selectedBeds,
       priceRange,
       sortBy,
@@ -125,6 +155,7 @@ export default function PropertiesPage() {
       selectedCategory,
       selectedPropertyType,
       selectedPurpose,
+      selectedLocation,
       selectedBeds,
       priceRange,
       sortBy,
@@ -155,6 +186,10 @@ export default function PropertiesPage() {
 
     if (selectedPurpose !== "all") {
       query = query.eq("purpose", selectedPurpose);
+    }
+
+    if (selectedLocation !== "all") {
+      query = query.eq("location_id", selectedLocation);
     }
 
     if (selectedBeds !== "all") {
@@ -282,6 +317,7 @@ export default function PropertiesPage() {
     setSelectedCategory("all");
     setSelectedPropertyType("all");
     setSelectedPurpose("all");
+    setSelectedLocation("all");
     setSelectedBeds("all");
     setPriceRange([0, 3000000]);
     setCurrentPage(1);
@@ -295,6 +331,7 @@ export default function PropertiesPage() {
     selectedCategory,
     selectedPropertyType,
     selectedPurpose,
+    selectedLocation,
     selectedBeds,
     priceRange,
     sortBy,
@@ -432,6 +469,29 @@ export default function PropertiesPage() {
                       {PURPOSE_OPTIONS.map((purpose) => (
                         <SelectItem key={purpose.value} value={purpose.value}>
                           {purpose.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Location Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location
+                  </label>
+                  <Select
+                    value={selectedLocation}
+                    onValueChange={setSelectedLocation}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Locations</SelectItem>
+                      {locations.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.name}, {location.country}
                         </SelectItem>
                       ))}
                     </SelectContent>

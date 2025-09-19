@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,8 +25,12 @@ interface PropertyFormProps {
     description: string | null;
     price: string;
     location: string | null;
+    location_id: string | null;
     category: string | null;
     status: string;
+    latitude: number | null;
+    longitude: number | null;
+    lot_size: number | null;
   };
 }
 
@@ -36,13 +40,37 @@ export function PropertyForm({ property }: PropertyFormProps) {
     description: property?.description || "",
     price: property?.price || "",
     location: property?.location || "",
+    location_id: property?.location_id || "",
     category: property?.category || "",
     status: property?.status || "available",
+    latitude: property?.latitude?.toString() || "",
+    longitude: property?.longitude?.toString() || "",
+    lot_size: property?.lot_size?.toString() || "",
   });
+  const [locations, setLocations] = useState<
+    Array<{ id: string; name: string; country: string }>
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
+
+  // Fetch available locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const { data, error } = await supabase
+        .from("locations")
+        .select("id, name, country")
+        .eq("is_active", true)
+        .order("name");
+
+      if (data && !error) {
+        setLocations(data);
+      }
+    };
+
+    fetchLocations();
+  }, [supabase]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,8 +79,21 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
     try {
       const propertyData = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
         price: Number.parseFloat(formData.price),
+        location_id: formData.location_id || null,
+        category: formData.category,
+        status: formData.status,
+        latitude: formData.latitude
+          ? Number.parseFloat(formData.latitude)
+          : null,
+        longitude: formData.longitude
+          ? Number.parseFloat(formData.longitude)
+          : null,
+        lot_size: formData.lot_size
+          ? Number.parseFloat(formData.lot_size)
+          : null,
       };
 
       if (property) {
@@ -119,15 +160,24 @@ export function PropertyForm({ property }: PropertyFormProps) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
+              <Label htmlFor="location_id">City/Location</Label>
+              <Select
+                value={formData.location_id}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, location_id: value })
                 }
-                placeholder="New York, NY"
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}, {location.country}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -152,6 +202,66 @@ export function PropertyForm({ property }: PropertyFormProps) {
               </Select>
             </div>
           </div>
+
+          {/* GPS Coordinates Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">GPS Location (Optional)</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="latitude">Latitude</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="any"
+                  value={formData.latitude}
+                  onChange={(e) =>
+                    setFormData({ ...formData, latitude: e.target.value })
+                  }
+                  placeholder="e.g., 9.0579"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter latitude coordinates (e.g., 9.0579 for Abuja)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="longitude">Longitude</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="any"
+                  value={formData.longitude}
+                  onChange={(e) =>
+                    setFormData({ ...formData, longitude: e.target.value })
+                  }
+                  placeholder="e.g., 7.4951"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter longitude coordinates (e.g., 7.4951 for Abuja)
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Land Size for Land Properties */}
+          {formData.category === "land" && (
+            <div className="space-y-2">
+              <Label htmlFor="lot_size">Land Size (sqm)</Label>
+              <Input
+                id="lot_size"
+                type="number"
+                step="0.01"
+                value={formData.lot_size}
+                onChange={(e) =>
+                  setFormData({ ...formData, lot_size: e.target.value })
+                }
+                placeholder="e.g., 500"
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter land size in square meters (sqm)
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
