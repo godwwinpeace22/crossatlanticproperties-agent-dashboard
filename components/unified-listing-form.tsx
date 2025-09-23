@@ -47,6 +47,7 @@ interface FormData {
   sqft: string;
   lotSize: string;
   category: string;
+  propertyType: string; // Add property type field
   purpose: string;
   yearBuilt: string;
   garageSpaces: string;
@@ -104,6 +105,7 @@ const initialFormData: FormData = {
   sqft: "",
   lotSize: "",
   category: "",
+  propertyType: "", // Add property type field
   purpose: "",
   yearBuilt: "",
   garageSpaces: "",
@@ -155,6 +157,7 @@ export default function UnifiedListingForm({
     price: "",
     location: "",
     category: "",
+    propertyType: "", // Add property type field
     status: "available",
     title: "",
     address: "",
@@ -189,25 +192,43 @@ export default function UnifiedListingForm({
     Array<{ id: string; name: string; country: string }>
   >([]);
 
-  // Load locations on component mount
+  // Property types management state
+  const [propertyTypes, setPropertyTypes] = useState<
+    Array<{ id: string; name: string; description: string | null }>
+  >([]);
+
+  // Load locations and property types on component mount
   useEffect(() => {
-    const fetchLocations = async () => {
+    const fetchData = async () => {
       try {
         const supabase = createClient();
-        const { data, error } = await supabase
+
+        // Fetch locations
+        const { data: locationsData, error: locationsError } = await supabase
           .from("locations")
           .select("id, name, country")
           .eq("is_active", true)
           .order("name");
 
-        if (error) throw error;
-        setLocations(data || []);
+        if (locationsError) throw locationsError;
+        setLocations(locationsData || []);
+
+        // Fetch property types
+        const { data: propertyTypesData, error: propertyTypesError } =
+          await supabase
+            .from("property_types")
+            .select("id, name, description")
+            .eq("is_active", true)
+            .order("name");
+
+        if (propertyTypesError) throw propertyTypesError;
+        setPropertyTypes(propertyTypesData || []);
       } catch (error) {
-        console.error("Error fetching locations:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchLocations();
+    fetchData();
   }, []);
 
   // Load existing listing data for edit mode
@@ -256,6 +277,7 @@ export default function UnifiedListingForm({
             sqft: property.squareFeet?.toString() || "",
             lotSize: property.lotSize?.toString() || "",
             category: property.category || "",
+            propertyType: property.propertyType || "", // Add property type from existing data
             purpose: property.purpose || "",
             yearBuilt: property.yearBuilt?.toString() || "",
             garageSpaces: property.garageSpaces?.toString() || "",
@@ -456,7 +478,7 @@ export default function UnifiedListingForm({
     if (!formData.zipCode.trim()) return "ZIP code is required";
     if (!formData.price || parseFloat(formData.price) <= 0)
       return "Valid price is required";
-    if (!formData.category) return "Property type is required";
+    if (!formData.category) return "Property category is required";
     if (!formData.purpose) return "Purpose (sale/rent) is required";
 
     // GPS coordinates validation (optional but if provided, must be valid)
@@ -680,7 +702,11 @@ export default function UnifiedListingForm({
       }
 
       if (!formData.category && !formData.category) {
-        throw new Error("Property type is required");
+        throw new Error("Property category is required");
+      }
+
+      if (!formData.propertyType) {
+        throw new Error("Property type/estate is required");
       }
 
       if (!formData.purpose) {
@@ -713,6 +739,7 @@ export default function UnifiedListingForm({
         state: formData.state,
         zipCode: formData.zipCode,
         category: formData.category || formData.category,
+        propertyType: formData.propertyType, // Add property type
         purpose: formData.purpose,
         status: formData.status || "available",
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
@@ -966,7 +993,7 @@ export default function UnifiedListingForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="category">Property Type *</Label>
+                <Label htmlFor="category">Property Category *</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) =>
@@ -974,7 +1001,7 @@ export default function UnifiedListingForm({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select property type" />
+                    <SelectValue placeholder="Select property category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="house">House</SelectItem>
@@ -986,6 +1013,33 @@ export default function UnifiedListingForm({
                 </Select>
               </div>
 
+              <div>
+                <Label htmlFor="propertyType">Property Type / Estate *</Label>
+                <Select
+                  value={formData.propertyType}
+                  onValueChange={(value) =>
+                    handleInputChange("propertyType", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select property type/estate" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {propertyTypes.map((propertyType) => (
+                      <SelectItem key={propertyType.id} value={propertyType.id}>
+                        {propertyType.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Choose the estate or development where this property is
+                  located.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="purpose">Purpose *</Label>
                 <Select

@@ -36,6 +36,12 @@ export function Header({ user }: HeaderProps) {
           >
             Properties
           </Link>
+          <Link
+            href="/property-types"
+            className="transition-colors hover:text-dnx-orange"
+          >
+            Property Types
+          </Link>
           <div className="group relative">
             <div className="flex items-center gap-1 text-sm font-medium transition-colors hover:text-dnx-orange cursor-pointer">
               Locations
@@ -150,6 +156,12 @@ export function Header({ user }: HeaderProps) {
                   className="transition-colors hover:text-dnx-orange"
                 >
                   Properties
+                </Link>
+                <Link
+                  href="/property-types"
+                  className="transition-colors hover:text-dnx-orange"
+                >
+                  Property Types
                 </Link>
 
                 {/* Mobile Locations Section */}

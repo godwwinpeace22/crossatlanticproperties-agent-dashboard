@@ -9,6 +9,8 @@ import { PropertyType } from "@/lib/types";
 export function PropertyTypesShowcase() {
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+  const [visibleCount] = useState(8); // Show 8 property types initially
 
   useEffect(() => {
     fetchPropertyTypes();
@@ -59,12 +61,18 @@ export function PropertyTypesShowcase() {
     return null;
   }
 
+  const displayedPropertyTypes = showAll
+    ? propertyTypes
+    : propertyTypes.slice(0, visibleCount);
+
+  const hasMoreItems = propertyTypes.length > visibleCount;
+
   return (
     <section className="section-padding bg-gradient-to-br from-green-500/5 to-blue-500/5">
       <div className="container-custom">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-6xl font-display font-bold mb-6">
-            <span className="gradient-text">Estates</span>
+            <span className="gradient-text">Popular Estates</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Discover different types of properties available in our network of
@@ -73,7 +81,7 @@ export function PropertyTypesShowcase() {
         </div>
 
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {propertyTypes.map((propertyType, index) => (
+          {displayedPropertyTypes.map((propertyType, index) => (
             <Link
               key={propertyType.id}
               href={`/property-types/${propertyType.id}`}
@@ -110,6 +118,29 @@ export function PropertyTypesShowcase() {
             </Link>
           ))}
         </div>
+
+        {!hasMoreItems && propertyTypes.length > 0 && (
+          <div className="text-center mt-12">
+            <Link href="/property-types">
+              <button className="inline-flex cursor-pointer items-center px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                View All Estates
+                <svg
+                  className="ml-2 w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
+                </svg>
+              </button>
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

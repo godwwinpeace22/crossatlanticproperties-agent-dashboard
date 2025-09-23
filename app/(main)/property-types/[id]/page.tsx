@@ -86,9 +86,13 @@ export default function PropertyTypePage() {
       maximumFractionDigits: 0,
     }).format(price);
 
-    if (purpose === "rent") {
-      return `${formattedPrice}/month`;
-    }
+    // if (purpose === "sale") {
+    //   return formattedPrice;
+    // }
+
+    // if (purpose === "rent") {
+    //   return `${formattedPrice}/month`;
+    // }
     return formattedPrice;
   };
 
@@ -132,7 +136,7 @@ export default function PropertyTypePage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Error</h1>
           <p className="text-gray-600 mb-6">{error}</p>
-          <Link href="/">
+          <Link href="/property-types">
             <Button>Go Home</Button>
           </Link>
         </div>
@@ -161,7 +165,7 @@ export default function PropertyTypePage() {
       <div className="bg-white border-b">
         <div className="container-custom py-6">
           <Link
-            href="/"
+            href="/property-types"
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4" />

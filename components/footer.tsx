@@ -11,8 +11,11 @@ import {
   Youtube,
 } from "lucide-react";
 import Image from "next/image";
+import { useLocations } from "@/hooks/use-locations";
 
 export function Footer() {
+  const { locations, isLoading } = useLocations();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -219,46 +222,45 @@ export function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-6">Popular Locations</h3>
             <ul className="space-y-3">
-              <li>
-                <a
-                  href="/properties?location=lagos"
-                  className="text-gray-300 hover:text-white transition-colors text-sm"
-                >
-                  Lagos Properties
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/properties?location=abuja"
-                  className="text-gray-300 hover:text-white transition-colors text-sm"
-                >
-                  Abuja (FCT)
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/properties?location=port-harcourt"
-                  className="text-gray-300 hover:text-white transition-colors text-sm"
-                >
-                  Port Harcourt
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/properties?location=kano"
-                  className="text-gray-300 hover:text-white transition-colors text-sm"
-                >
-                  Kano
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/properties?location=ibadan"
-                  className="text-gray-300 hover:text-white transition-colors text-sm"
-                >
-                  Ibadan
-                </a>
-              </li>
+              {isLoading ? (
+                // Loading skeleton
+                <>
+                  {[...Array(5)].map((_, index) => (
+                    <li key={index}>
+                      <div className="h-4 bg-gray-600 rounded animate-pulse w-24"></div>
+                    </li>
+                  ))}
+                </>
+              ) : locations.length > 0 ? (
+                // Display actual locations from database
+                locations.slice(0, 6).map((location) => (
+                  <li key={location.id}>
+                    <a
+                      href={`/properties?location=${location.id}`}
+                      className="text-gray-300 hover:text-white transition-colors text-sm"
+                    >
+                      {location.name}
+                    </a>
+                  </li>
+                ))
+              ) : (
+                // Fallback when no locations are available
+                <li>
+                  <span className="text-gray-400 text-sm">
+                    No locations available
+                  </span>
+                </li>
+              )}
+              {locations.length > 6 && (
+                <li>
+                  <a
+                    href="/properties"
+                    className="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium"
+                  >
+                    View all locations →
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
 
