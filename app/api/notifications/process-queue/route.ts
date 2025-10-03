@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         body_text,
         attempts,
         max_attempts,
-        notifications!email_queue_notification_id_fkey(
+        notifications(
           type,
           title,
           message
@@ -61,15 +61,20 @@ export async function GET(request: NextRequest) {
       .order("scheduled_at", { ascending: true })
       .limit(limit * 2); // Fetch more to filter
 
+    if (fetchError) {
+      console.error("Fetch error:", fetchError);
+      throw fetchError;
+    }
+
+    console.log("Fetched emails:", allQueuedEmails?.length || 0);
+
     // Filter by attempts < max_attempts
     const queuedEmails =
       allQueuedEmails
         ?.filter((email) => email.attempts < email.max_attempts)
         .slice(0, limit) || [];
 
-    if (fetchError) {
-      throw fetchError;
-    }
+    console.log("Filtered emails:", queuedEmails.length);
 
     if (!queuedEmails || queuedEmails.length === 0) {
       return NextResponse.json({
