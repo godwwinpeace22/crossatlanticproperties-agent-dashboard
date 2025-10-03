@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function PaymentVerifyPage() {
+function PaymentVerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams.get("reference");
@@ -100,7 +99,6 @@ export default function PaymentVerifyPage() {
                 <span className="font-mono text-sm">{reference}</span>
               </div>
             </div>
-
             <div className="text-sm text-gray-600 space-y-2">
               <p className="font-medium text-green-800">✓ Payment Confirmed</p>
               <p className="font-medium text-green-800">✓ Interest Submitted</p>
@@ -111,7 +109,6 @@ export default function PaymentVerifyPage() {
                 </p>
               </div>
             </div>
-
             <div className="space-y-2">
               <Button
                 onClick={() => router.replace("/dashboard")}
@@ -147,10 +144,9 @@ export default function PaymentVerifyPage() {
         <CardContent className="space-y-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800 text-center">
-              {error || "We couldn't verify your payment. Please try again."}
+              {error || "We could not verify your payment. Please try again."}
             </p>
           </div>
-
           <div className="space-y-2">
             <Button
               variant="outline"
@@ -170,5 +166,29 @@ export default function PaymentVerifyPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function PaymentVerifyLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md">
+        <CardContent className="pt-6">
+          <div className="text-center space-y-4">
+            <Clock className="h-16 w-16 mx-auto text-blue-600 animate-spin" />
+            <h2 className="text-2xl font-bold">Loading</h2>
+            <p className="text-gray-600">Please wait...</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function PaymentVerifyPage() {
+  return (
+    <Suspense fallback={<PaymentVerifyLoading />}>
+      <PaymentVerifyContent />
+    </Suspense>
   );
 }

@@ -88,7 +88,7 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
             label: "Notifications",
           },
           {
-            href: "/dashboard/market-settings",
+            href: "/dashboard/admin/market-settings",
             icon: TrendingUp,
             label: "Market Analysis Settings",
           },
