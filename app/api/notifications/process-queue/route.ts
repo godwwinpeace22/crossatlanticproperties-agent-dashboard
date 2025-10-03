@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import {
   sendNotificationEmail,
   batchSendNotificationEmails,
@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    // Use service role client to bypass RLS for cron job operations
+    const supabase = createServiceClient();
 
     // Get batch size from query params
     const searchParams = request.nextUrl.searchParams;
