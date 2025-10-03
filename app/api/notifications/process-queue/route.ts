@@ -39,23 +39,7 @@ export async function GET(request: NextRequest) {
     // because Supabase client doesn't support column comparison
     const { data: allQueuedEmails, error: fetchError } = await supabase
       .from("email_queue")
-      .select(
-        `
-        id,
-        notification_id,
-        to_email,
-        subject,
-        body_html,
-        body_text,
-        attempts,
-        max_attempts,
-        notifications(
-          type,
-          title,
-          message
-        )
-      `
-      )
+      .select("*")
       .eq("status", "pending")
       .lte("scheduled_at", new Date().toISOString())
       .order("scheduled_at", { ascending: true })
@@ -69,12 +53,36 @@ export async function GET(request: NextRequest) {
     console.log("Fetched emails:", allQueuedEmails?.length || 0);
 
     // Filter by attempts < max_attempts
-    const queuedEmails =
-      allQueuedEmails
-        ?.filter((email) => email.attempts < email.max_attempts)
-        .slice(0, limit) || [];
+    const filteredEmails =
+      allQueuedEmails?.filter((email) => email.attempts < email.max_attempts) || [];
 
-    console.log("Filtered emails:", queuedEmails.length);
+    console.log("Filtered emails:", filteredEmails.length);
+
+    // Fetch notifications separately
+    if (filteredEmails.length > 0) {
+      const notificationIds = filteredEmails.map((e) => e.notification_id);
+      const { data: notifications } = await supabase
+        .from("notifications")
+        .select("id, type, title, message")
+        .in("id", notificationIds);
+
+      // Merge notifications with emails
+      const notificationMap = new Map(
+        notifications?.map((n) => [n.id, n]) || []
+      );
+
+      var queuedEmails = filteredEmails
+        .map((email) => ({
+          ...email,
+          notifications: notificationMap.get(email.notification_id),
+        }))
+        .filter((email) => email.notifications) // Only include emails with valid notifications
+        .slice(0, limit);
+
+      console.log("Emails with notifications:", queuedEmails.length);
+    } else {
+      var queuedEmails = [];
+    }
 
     if (!queuedEmails || queuedEmails.length === 0) {
       return NextResponse.json({
