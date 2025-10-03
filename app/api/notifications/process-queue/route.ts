@@ -54,7 +54,8 @@ export async function GET(request: NextRequest) {
 
     // Filter by attempts < max_attempts
     const filteredEmails =
-      allQueuedEmails?.filter((email) => email.attempts < email.max_attempts) || [];
+      allQueuedEmails?.filter((email) => email.attempts < email.max_attempts) ||
+      [];
 
     console.log("Filtered emails:", filteredEmails.length);
 
