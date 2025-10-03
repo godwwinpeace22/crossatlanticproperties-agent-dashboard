@@ -44,8 +44,12 @@ async function sendEmail({
     const { Resend } = await import("resend");
     const resend = new Resend(process.env.RESEND_API_KEY);
 
+    const fromEmail =
+      process.env.EMAIL_FROM ||
+      "CrossAtlanticProperties <noreply@crossatlanticproperties.com>";
+
     const { data, error } = await resend.emails.send({
-      from: "CrossAtlanticProperties <noreply@crossatlanticproperties.com>", //onboarding@resend.dev
+      from: fromEmail,
       to: [to],
       subject: subject,
       html: html,
