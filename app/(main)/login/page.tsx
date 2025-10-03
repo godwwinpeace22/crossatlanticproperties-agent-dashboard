@@ -59,10 +59,6 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    e.preventDefault();
     const supabase = createClient();
     setIsLoading(true);
     setError("");
@@ -80,7 +76,13 @@ export default function LoginPage() {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Force a hard redirect to ensure session is properly updated
-      window.location.href = "/dashboard";
+
+      // check if there is a return-to url
+      const returnTo = new URLSearchParams(window.location.search).get(
+        "redirect"
+      );
+
+      window.location.href = returnTo || "/dashboard";
     } catch (error: unknown) {
       if (error instanceof Error) {
         if (error.message.includes("Invalid login credentials")) {
@@ -97,8 +99,9 @@ export default function LoginPage() {
       } else {
         setError("An error occurred during sign in");
       }
-    } finally {
+
       setIsLoading(false);
+    } finally {
     }
   };
 

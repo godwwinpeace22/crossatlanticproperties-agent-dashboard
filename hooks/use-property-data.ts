@@ -1,35 +1,6 @@
 import useSWR from "swr";
 import { createClient } from "@/lib/supabase/client";
-
-interface Property {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  address: string;
-  city: string;
-  state: string;
-  zip_code: string;
-  category: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  square_feet?: number;
-  lotSize?: number;
-  status: string;
-  created_at: string;
-  latitude?: number;
-  longitude?: number;
-  virtual_tour_enabled?: boolean;
-  property_images?: PropertyImage[];
-  floor_plan_url?: string;
-}
-
-interface PropertyImage {
-  id: number;
-  property_id: number;
-  url: string;
-  isPrimary: boolean;
-}
+import { Property, PropertyImage } from "@/lib/types";
 
 interface PropertyWithFavorite extends Property {
   isFavorite?: boolean;
@@ -74,7 +45,7 @@ const fetcher = async (url: string) => {
 
     const { data: similarData, error: similarError } = await supabase
       .from("properties")
-      .select("*, property_images!inner(*)")
+      .select("*, property_images(*)")
       .eq("category", category)
       .eq("status", "available")
       .neq("id", propertyId)
@@ -82,7 +53,13 @@ const fetcher = async (url: string) => {
 
     if (similarError) throw similarError;
 
-    return similarData || [];
+    // Map the data to include images array properly
+    const formattedData = (similarData || []).map((property: any) => ({
+      ...property,
+      images: property.property_images || [],
+    }));
+
+    return formattedData;
   }
 
   if (url.startsWith("/api/nearby-properties/")) {
@@ -90,7 +67,7 @@ const fetcher = async (url: string) => {
 
     const { data: nearbyData, error: nearbyError } = await supabase
       .from("properties")
-      .select("*, property_images!inner(*)")
+      .select("*, property_images(*)")
       .eq("city", city)
       .eq("status", "available")
       .neq("id", propertyId)
@@ -98,7 +75,13 @@ const fetcher = async (url: string) => {
 
     if (nearbyError) throw nearbyError;
 
-    return nearbyData || [];
+    // Map the data to include images array properly
+    const formattedData = (nearbyData || []).map((property: any) => ({
+      ...property,
+      images: property.property_images || [],
+    }));
+
+    return formattedData;
   }
 
   if (url.startsWith("/api/favorite-status/")) {

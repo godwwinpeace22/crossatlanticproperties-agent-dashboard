@@ -3,13 +3,15 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Bed, Bath, Maximize } from "lucide-react";
+import { MapPin, Bed, Bath, Maximize, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Property } from "@/lib/types";
 
 interface PropertyCardProps {
   property: Property;
   viewMode: "grid" | "list";
+  onInterestClick?: (property: Property) => void;
 }
 
 const getCategoryDisplay = (status: string) => {
@@ -28,7 +30,32 @@ const formatPrice = (price: number, purpose?: string) => {
   return formattedPrice;
 };
 
-export function PropertyCard({ property, viewMode }: PropertyCardProps) {
+const isPromotionActive = (property: Property) => {
+  if (
+    !property.is_promotional ||
+    !property.promotion_start_date ||
+    !property.promotion_end_date
+  ) {
+    return false;
+  }
+  const now = new Date();
+  const start = new Date(property.promotion_start_date);
+  const end = new Date(property.promotion_end_date);
+  return now >= start && now <= end;
+};
+
+const calculateDiscount = (property: Property) => {
+  if (!property.promotional_price) return 0;
+  const originalPrice = property.price;
+  const promotionalPrice = property.promotional_price;
+  return Math.round(((originalPrice - promotionalPrice) / originalPrice) * 100);
+};
+
+export function PropertyCard({
+  property,
+  viewMode,
+  onInterestClick,
+}: PropertyCardProps) {
   const isListView = viewMode === "list";
 
   return (
@@ -82,6 +109,15 @@ export function PropertyCard({ property, viewMode }: PropertyCardProps) {
               property.category?.slice(1)}
           </Badge>
         </div>
+
+        {/* Promotional Badge */}
+        {isPromotionActive(property) && (
+          <div className="absolute top-12 right-4">
+            <Badge className="bg-red-500 hover:bg-red-600 text-white animate-pulse">
+              {calculateDiscount(property)}% OFF
+            </Badge>
+          </div>
+        )}
       </div>
 
       <div className={`p-6 ${isListView ? "flex-1" : ""}`}>
@@ -91,8 +127,40 @@ export function PropertyCard({ property, viewMode }: PropertyCardProps) {
               {property.title}
             </h3>
           </Link>
-          <div className="text-xl font-bold text-blue-600">
-            {formatPrice(property.price, property.purpose)}
+
+          {/* Price Display with Promotional Logic */}
+          <div className="mb-2">
+            {isPromotionActive(property) && property.promotional_price ? (
+              <div className="space-y-1">
+                <div className="text-sm text-gray-500 line-through">
+                  {formatPrice(
+                    property.original_price || property.price,
+                    property.purpose
+                  )}
+                </div>
+                <div className="text-xl font-bold text-red-600">
+                  {formatPrice(property.promotional_price, property.purpose)}{" "}
+                  <br />
+                  <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                    Save{" "}
+                    {Math.round(
+                      (((property.original_price || property.price) -
+                        property.promotional_price) /
+                        (property.original_price || property.price)) *
+                        100
+                    )}
+                    %
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-xl font-bold text-blue-600">
+                {formatPrice(
+                  property.original_price || property.price,
+                  property.purpose
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -104,7 +172,7 @@ export function PropertyCard({ property, viewMode }: PropertyCardProps) {
         </div>
 
         {/* Property Details - Inline */}
-        <div className="flex items-center flex-wrap gap-4 text-sm text-gray-600">
+        <div className="flex items-center flex-wrap gap-4 text-sm text-gray-600 mb-4">
           {property.bedrooms && property.category !== "land" && (
             <div className="flex items-center">
               <Bed className="h-4 w-4 mr-1" />
@@ -127,6 +195,24 @@ export function PropertyCard({ property, viewMode }: PropertyCardProps) {
               <span>{property?.lotSize} sqm</span>
             </div>
           )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 mt-4">
+          {/* <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => onInterestClick?.(property)}
+          >
+            <Heart className="h-4 w-4 mr-1" />
+            I'm Interested
+          </Button> */}
+          <Link href={`/properties/${property.id}`} className="flex-1">
+            <Button variant="default" size="sm" className="w-full">
+              View Details
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

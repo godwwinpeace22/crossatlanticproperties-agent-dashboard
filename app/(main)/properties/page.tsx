@@ -30,6 +30,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/property-card";
+import { PropertyInterestWorkflow } from "@/components/property-interest-workflow";
 import { createClient } from "@/lib/supabase/client";
 import { Property, PropertyType, PropertyFilters } from "@/lib/types";
 
@@ -84,6 +85,18 @@ export default function PropertiesPage() {
   const [locations, setLocations] = useState<
     Array<{ id: string; name: string; country: string }>
   >([]);
+
+  // Interest workflow state
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(
+    null
+  );
+  const [isInterestWorkflowOpen, setIsInterestWorkflowOpen] = useState(false);
+
+  // Handle property interest click
+  const handlePropertyInterest = (property: Property) => {
+    setSelectedProperty(property);
+    setIsInterestWorkflowOpen(true);
+  };
 
   // Load locations on component mount
   useEffect(() => {
@@ -630,6 +643,7 @@ export default function PropertiesPage() {
                         key={property.id}
                         property={property}
                         viewMode="grid"
+                        onInterestClick={handlePropertyInterest}
                       />
                     ))}
                   </div>
@@ -640,6 +654,7 @@ export default function PropertiesPage() {
                         key={property.id}
                         property={property}
                         viewMode="list"
+                        onInterestClick={handlePropertyInterest}
                       />
                     ))}
                   </div>
@@ -672,6 +687,18 @@ export default function PropertiesPage() {
             )}
           </div>
         </div>
+
+        {/* Property Interest Workflow */}
+        {selectedProperty && (
+          <PropertyInterestWorkflow
+            property={selectedProperty}
+            isOpen={isInterestWorkflowOpen}
+            onClose={() => {
+              setIsInterestWorkflowOpen(false);
+              setSelectedProperty(null);
+            }}
+          />
+        )}
       </div>
     </div>
   );

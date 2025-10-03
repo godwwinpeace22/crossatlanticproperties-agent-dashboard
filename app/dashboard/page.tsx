@@ -6,8 +6,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Building2, DollarSign, Users, TrendingUp } from "lucide-react";
+import {
+  Building2,
+  DollarSign,
+  Users,
+  TrendingUp,
+  Heart,
+  FileText,
+  Clock,
+} from "lucide-react";
 import { formatCurrency, formatNumber } from "@/lib/format";
+import { KYCStatusCard } from "@/components/kyc-status-card";
+import { MyReferralsCard } from "@/components/my-referrals-card";
+import { FeaturedReferralCard } from "@/components/featured-referral-card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -17,10 +31,10 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Get user profile
+  // Get user profile with referral_id
   const { data: profile } = await supabase
     .from("profiles")
-    .select("*")
+    .select("*, referral_id")
     .eq("id", user.id)
     .single();
 
@@ -176,12 +190,17 @@ export default async function DashboardPage() {
     );
   }
 
-  // Agent stats (existing logic)
+  // Agent stats (existing logic + property interests)
   const [
     { count: totalProperties },
     { count: totalCommissions },
     { count: networkSize },
     { data: recentCommissions },
+    { data: propertyInterests },
+    { data: kycSubmission },
+    { data: pendingPayments },
+    { data: unreadNotifications },
+    { data: myReferrals },
   ] = await Promise.all([
     supabase.from("properties").select("*", { count: "exact", head: true }),
     supabase
@@ -198,6 +217,48 @@ export default async function DashboardPage() {
       .eq("agent_id", user.id)
       .order("created_at", { ascending: false })
       .limit(5),
+    // Property interests for this agent/customer
+    supabase
+      .from("property_interests")
+      .select(
+        `
+        *,
+        property:properties(name, price)
+      `
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    // KYC submission
+    supabase
+      .from("kyc_submissions")
+      .select("*")
+      .eq("user_id", user.id)
+      .single(),
+    // Pending payments
+    supabase
+      .from("installment_payments")
+      .select("*", { count: "exact", head: true })
+      .eq("property_interest.user_id", user.id)
+      .eq("status", "pending"),
+    // Unread notifications
+    supabase
+      .from("notifications")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("read", false),
+    // Property interests that used this agent's referral
+    supabase
+      .from("property_interests")
+      .select(
+        `
+        *,
+        profiles:profiles!property_interests_user_id_fkey(full_name, email),
+        property:properties(name, price, city)
+      `
+      )
+      .eq("referring_agent_id", user.id)
+      .order("created_at", { ascending: false }),
   ]);
 
   const totalEarnings =
@@ -213,10 +274,14 @@ export default async function DashboardPage() {
           Welcome back, {profile?.full_name || profile?.email}
         </h1>
         <p className="text-muted-foreground">
-          Here's an overview of your MLM dashboard
+          Your dashboard and property investment overview
         </p>
       </div>
 
+      {/* Featured Referral Code Card - Prominently displayed */}
+      <FeaturedReferralCard referralCode={profile?.referral_id || ""} />
+
+      {/* MLM Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -266,17 +331,159 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Commission Rate
+              My Property Investments
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">10%</div>
-            <p className="text-xs text-muted-foreground">Level 1 commission</p>
+            <div className="text-2xl font-bold">
+              {propertyInterests?.length || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Properties invested in
+            </p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Property Investment Overview */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* KYC Status */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            KYC Status
+          </h2>
+          <KYCStatusCard kycSubmission={kycSubmission} />
+          {!kycSubmission && (
+            <Button asChild className="w-full">
+              <Link href="/dashboard/my-interests">
+                Complete KYC to Start Investing
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {/* Quick Stats */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Investment Summary</h2>
+          <div className="grid gap-3">
+            <Card className="py-5">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-orange-600" />
+                    <span className="text-sm font-medium">
+                      Pending Payments
+                    </span>
+                  </div>
+                  <Badge variant="secondary">{pendingPayments || 0}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* My Referrals Section */}
+      <MyReferralsCard
+        referrals={myReferrals || []}
+        referralCode={profile?.referral_id || ""}
+      />
+
+      {/* Property Interests Summary */}
+      {propertyInterests && propertyInterests.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between gap-2">
+              <span>Recent Properties</span>
+
+              <Link
+                href="/dashboard/my-interests"
+                className="text-blue-500 text-sm"
+              >
+                View All
+              </Link>
+            </CardTitle>
+            <CardDescription>
+              Your latest property investments and interests
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {propertyInterests.slice(0, 3).map((interest: any) => (
+                <div
+                  key={interest.id}
+                  className="flex items-center justify-between p-3 border rounded"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {interest.property?.name ||
+                        `Property #${interest.property_id.slice(-8)}`}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {interest.selected_payment_plan} plan • Status:{" "}
+                      {interest.status}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <Badge
+                      variant={
+                        interest.status === "pending"
+                          ? "secondary"
+                          : interest.status === "approved"
+                          ? "default"
+                          : interest.status === "completed"
+                          ? "default"
+                          : "destructive"
+                      }
+                    >
+                      {interest.status.toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+              {propertyInterests.length > 3 && (
+                <Button asChild variant="ghost" className="w-full">
+                  <Link href="/dashboard/my-interests">
+                    View All {propertyInterests.length} Interests
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Start Your Property Investment Journey
+            </CardTitle>
+            <CardDescription>
+              Browse available properties and express your interest to start
+              investing
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              As an agent, you can also invest in properties. Complete your KYC
+              verification and express interest in properties to get started
+              with your investment portfolio.
+            </p>
+            <div className="flex gap-2">
+              <Button asChild>
+                <Link href="/(main)/properties">Browse Properties</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/dashboard/kyc">Complete KYC</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* MLM Commission History */}
       {recentCommissions && recentCommissions.length > 0 && (
         <Card>
           <CardHeader>

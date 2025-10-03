@@ -15,6 +15,11 @@ import {
   LogOut,
   Network,
   PenTool,
+  Heart,
+  CreditCard,
+  Bell,
+  UserPlus,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -58,14 +63,34 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
             label: "Manage Agents",
           },
           {
+            href: "/dashboard/admin/application-fees",
+            icon: DollarSign,
+            label: "Application fees",
+          },
+          {
             href: "/dashboard/admin/blog",
             icon: PenTool,
             label: "Blog Management",
           },
           {
-            href: "/dashboard/admin/approvals",
+            href: "/dashboard/admin/kyc-approvals",
             icon: FileText,
-            label: "Approvals",
+            label: "KYC Approvals",
+          },
+          {
+            href: "/dashboard/admin/property-interests",
+            icon: Heart,
+            label: "Property Interests",
+          },
+          {
+            href: "/dashboard/notifications",
+            icon: Bell,
+            label: "Notifications",
+          },
+          {
+            href: "/dashboard/market-settings",
+            icon: TrendingUp,
+            label: "Market Analysis Settings",
           },
           {
             href: "/dashboard/admin/settings",
@@ -74,16 +99,35 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
           },
         ]
       : [
+          // MLM Features
           { href: "/dashboard/network", icon: Network, label: "My Network" },
+          {
+            href: "/dashboard/referrals",
+            icon: UserPlus,
+            label: "My Referrals",
+          },
           {
             href: "/dashboard/commissions",
             icon: DollarSign,
             label: "Commissions",
           },
+
+          // Property Investment Features
           {
-            href: "/dashboard/submissions",
-            icon: FileText,
-            label: "Submissions",
+            href: "/dashboard/my-interests",
+            icon: Heart,
+            label: "My Property Interests",
+          },
+          {
+            href: "/dashboard/kyc",
+            icon: Users,
+            label: "KYC Status",
+          },
+
+          {
+            href: "/dashboard/notifications",
+            icon: Bell,
+            label: "Notifications",
           },
         ]),
   ];
@@ -126,7 +170,7 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
           })}
         </nav>
 
-        <div className="mt-auto space-y-3">
+        <div className="mt-auto space-y-3 pt-5">
           <Button
             variant="outline"
             className="w-full justify-start bg-transparent cursor-pointer"

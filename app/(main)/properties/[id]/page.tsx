@@ -13,6 +13,7 @@ import {
   Maximize,
   Share2,
   Phone,
+  Expand,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import PropertyGallery from "@/components/property-gallery";
 import { PropertyDetailSkeleton } from "@/components/property-detail-skeleton";
+import { PropertyInterestWorkflow } from "@/components/property-interest-workflow";
 import { createClient } from "@/lib/supabase/client";
+import { usePropertyInterest } from "@/hooks/use-property-interest";
 import {
   useProperty,
   usePropertyImages,
@@ -31,13 +34,8 @@ import {
   useNearbyProperties,
   useFavoriteStatus,
 } from "@/hooks/use-property-data";
-
-interface PropertyImage {
-  id: number;
-  property_id: number;
-  url: string;
-  isPrimary: boolean;
-}
+import { PropertyShareButton } from "@/components/property-share-button";
+import type { PropertyImage } from "@/lib/types";
 
 export default function PropertyDetailPage({
   params,
@@ -62,6 +60,11 @@ export default function PropertyDetailPage({
     property?.city || ""
   );
   const { isFavorite, mutate: mutateFavorite } = useFavoriteStatus(propertyId);
+  const {
+    hasInterest,
+    status: interestStatus,
+    isLoading: isCheckingInterest,
+  } = usePropertyInterest(propertyId);
 
   // Form state
   const [contactForm, setContactForm] = useState({
@@ -71,10 +74,19 @@ export default function PropertyDetailPage({
     message: "I'm interested in this property...",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInterestWorkflowOpen, setIsInterestWorkflowOpen] = useState(false);
 
   // Derived state
   const isLoading = isLoadingProperty || isLoadingImages;
   const isError = propertyError;
+
+  // Type-safe property access helpers
+  const getPropertyTitle = () => property?.title || property?.name || "";
+  const getPropertyPrice = () =>
+    property?.promotional_price || property?.price || 0;
+  const getOriginalPrice = () =>
+    property?.original_price || property?.price || 0;
+  const getSquareFeet = () => property?.lotSize;
 
   // Helper functions to format data
   const formatPrice = (price: number) => {
@@ -94,6 +106,20 @@ export default function PropertyDetailPage({
       : status === "sold"
       ? "Sold"
       : status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  const getInterestStatusDisplay = (status: string) => {
+    const statusMap: Record<string, { label: string; color: string }> = {
+      payment_pending: { label: "Payment Pending", color: "text-orange-600" },
+      payment_failed: { label: "Payment Failed", color: "text-red-600" },
+      pending: { label: "Under Review", color: "text-blue-600" },
+      approved: { label: "Approved", color: "text-green-600" },
+      rejected: { label: "Rejected", color: "text-red-600" },
+      withdrawn: { label: "Withdrawn", color: "text-gray-600" },
+      completed: { label: "Completed", color: "text-green-600" },
+    };
+
+    return statusMap[status] || { label: status, color: "text-gray-600" };
   };
 
   // Get primary image or first image
@@ -179,8 +205,8 @@ export default function PropertyDetailPage({
     if (!property) return;
 
     const shareData = {
-      title: property.title,
-      text: `Check out this amazing property: ${property.title}`,
+      title: getPropertyTitle(),
+      text: `Check out this amazing property: ${getPropertyTitle()}`,
       url: window.location.href,
     };
 
@@ -327,7 +353,7 @@ export default function PropertyDetailPage({
                 <div className="space-y-2">
                   <div className="">
                     <h1 className="text-3xl text-gray-600 font-bold">
-                      {property.title}{" "}
+                      {getPropertyTitle()}{" "}
                     </h1>
                     <Badge>{getCategoryDisplay(property.status)}</Badge>
                   </div>
@@ -374,7 +400,7 @@ export default function PropertyDetailPage({
                         Area
                       </span>
                       <span className="font-medium text-sm">
-                        {formatSquareFeet(property.square_feet || 0)}
+                        {property.lotSize} sqm
                       </span>
                     </div>
                   </div>
@@ -429,61 +455,27 @@ export default function PropertyDetailPage({
                           </li>
                         </>
                       )}
-                      <li className="flex justify-between">
+                      {/* <li className="flex justify-between">
                         <span className="text-muted-foreground">
                           Floor Area
                         </span>
                         <span className="font-medium">
-                          {formatSquareFeet(property.square_feet || 0)}
+                          {property?.sqft} sqm
                         </span>
-                      </li>
-                      <li className="flex justify-between">
-                        <span className="text-muted-foreground">Lot Size</span>
-                        <span className="font-medium">
-                          {property.lotSize ? `${property.lotSize} sqm` : "N/A"}
-                        </span>
-                      </li>
+                      </li> */}
+                      {property?.category == "land" && (
+                        <li className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Lot Size
+                          </span>
+                          <span className="font-medium">
+                            {property?.lotSize
+                              ? `${property.lotSize} sqm`
+                              : "N/A"}
+                          </span>
+                        </li>
+                      )}
                     </ul>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Property Features Section */}
-                <div className="space-y-4">
-                  <h3 className="text-xl font-semibold mb-4">
-                    Property Features
-                  </h3>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
-                    <div className="flex items-center">
-                      <Home className="h-4 w-4 text-primary mr-2" />
-                      <span>
-                        {property.category.charAt(0).toUpperCase() +
-                          property.category.slice(1)}
-                      </span>
-                    </div>
-                    {property.category !== "land" && (
-                      <>
-                        <div className="flex items-center">
-                          <Home className="h-4 w-4 text-primary mr-2" />
-                          <span>{property.bedrooms || 0} Bedrooms</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Home className="h-4 w-4 text-primary mr-2" />
-                          <span>{property.bathrooms || 0} Bathrooms</span>
-                        </div>
-                      </>
-                    )}
-                    <div className="flex items-center">
-                      <Home className="h-4 w-4 text-primary mr-2" />
-                      <span>{formatSquareFeet(property.square_feet || 0)}</span>
-                    </div>
-                    {property.lotSize && (
-                      <div className="flex items-center">
-                        <Home className="h-4 w-4 text-primary mr-2" />
-                        <span>{property.lotSize} sqm</span>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -570,17 +562,90 @@ export default function PropertyDetailPage({
               {/* Price Card */}
               <div className="rounded-lg border border-gray-200 p-6 bg-white">
                 <div className="text-center mb-4">
-                  <h2 className="text-3xl font-bold text-primary">
-                    {formatPrice(property.price)}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {property.category === "land" ? "Per plot" : "Total price"}
+                  {/* Check if promotional pricing is active */}
+                  {property?.is_promotional &&
+                  property?.promotional_price &&
+                  property?.promotion_start_date &&
+                  property?.promotion_end_date &&
+                  new Date() >= new Date(property.promotion_start_date) &&
+                  new Date() <= new Date(property.promotion_end_date) ? (
+                    <div className="space-y-2">
+                      <div className="bg-red-100 border border-red-200 rounded-lg p-3 mb-3">
+                        <div className="text-red-600 font-semibold text-sm mb-1">
+                          🎉 LIMITED TIME OFFER
+                        </div>
+                        <div className="text-red-800 text-xs">
+                          Save{" "}
+                          {Math.round(
+                            ((getOriginalPrice() - property.promotional_price) /
+                              getOriginalPrice()) *
+                              100
+                          )}
+                          % - Offer ends{" "}
+                          {new Date(
+                            property.promotion_end_date
+                          ).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="text-lg text-gray-500 line-through">
+                        {formatPrice(getOriginalPrice())}
+                      </div>
+                      <h2 className="text-3xl font-bold text-red-600">
+                        {formatPrice(property.promotional_price)}
+                      </h2>
+                      <div className="inline-block bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        You Save{" "}
+                        {formatPrice(
+                          getOriginalPrice() - property.promotional_price
+                        )}
+                        !
+                      </div>
+                    </div>
+                  ) : (
+                    <h2 className="text-3xl font-bold text-primary">
+                      {formatPrice(getOriginalPrice())}
+                    </h2>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {property.category === "land" ? "" : "Total price"}
                   </p>
                 </div>
 
                 <div className="space-y-3">
+                  {hasInterest ? (
+                    <div className="space-y-2">
+                      <Button
+                        className="w-full"
+                        size="lg"
+                        disabled
+                        variant="secondary"
+                      >
+                        ✓ Interest Already Submitted
+                      </Button>
+                      <p className="text-xs text-center">
+                        Status:{" "}
+                        <span
+                          className={`font-semibold ${
+                            getInterestStatusDisplay(interestStatus || "").color
+                          }`}
+                        >
+                          {getInterestStatusDisplay(interestStatus || "").label}
+                        </span>
+                      </p>
+                    </div>
+                  ) : (
+                    <Button
+                      className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                      size="lg"
+                      onClick={() => setIsInterestWorkflowOpen(true)}
+                      disabled={isCheckingInterest}
+                    >
+                      {isCheckingInterest ? "Checking..." : "I'm Interested"}
+                    </Button>
+                  )}
                   <Button
-                    className="w-full bg-blue-500 hover:bg-blue-500/90 cursor-pointer"
+                    variant="outline"
+                    className="w-full"
                     size="lg"
                     onClick={handleContactProperty}
                   >
@@ -605,14 +670,13 @@ export default function PropertyDetailPage({
                     />
                     {isFavorite ? "Remove from Favorites" : "Save to Favorites"}
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={handleShareProperty}
-                  >
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share Property
-                  </Button>
+                  <PropertyShareButton
+                    propertyTitle={getPropertyTitle()}
+                    propertyUrl={
+                      typeof window !== "undefined" ? window.location.href : ""
+                    }
+                    fullWidth
+                  />
                 </div>
               </div>
 
@@ -759,10 +823,8 @@ export default function PropertyDetailPage({
                     <Link href={`/properties/${similarProp.id}`}>
                       <div className="relative overflow-hidden rounded-lg">
                         <Image
-                          src={getPrimaryImage(
-                            similarProp.property_images || []
-                          )}
-                          alt={similarProp.title}
+                          src={getPrimaryImage(similarProp.images || [])}
+                          alt={similarProp.title || similarProp.name}
                           width={400}
                           height={300}
                           className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -785,7 +847,7 @@ export default function PropertyDetailPage({
                       <div className="p-4 px-0 space-y-2">
                         <div className="flex items-center justify-between">
                           <h3 className="font-semibold text-lg group-hover:text-dnx-blue transition-colors">
-                            {similarProp.title}
+                            {similarProp.title || (similarProp as any).name}
                           </h3>
                           <span className="text-xl font-bold text-dnx-blue">
                             {formatPrice(similarProp.price)}
@@ -813,7 +875,7 @@ export default function PropertyDetailPage({
                           <div className="flex items-center">
                             <Maximize className="h-4 w-4 mr-1" />
                             <span>
-                              {formatSquareFeet(similarProp.square_feet || 0)}
+                              {formatSquareFeet(similarProp.square_feet || parseInt(similarProp.sqft || "0") || 0)}
                             </span>
                           </div>
                         </div> */}
@@ -844,10 +906,8 @@ export default function PropertyDetailPage({
                     <Link href={`/properties/${nearbyProp.id}`}>
                       <div className="relative overflow-hidden rounded-lg">
                         <Image
-                          src={getPrimaryImage(
-                            nearbyProp.property_images || []
-                          )}
-                          alt={nearbyProp.title}
+                          src={getPrimaryImage(nearbyProp.images || [])}
+                          alt={nearbyProp.title || nearbyProp.name}
                           width={400}
                           height={300}
                           className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -870,7 +930,7 @@ export default function PropertyDetailPage({
                       <div className="p-4 space-y-2">
                         <div className="flex items-center justify-between">
                           <h3 className="font-semibold text-lg group-hover:text-dnx-blue transition-colors">
-                            {nearbyProp.title}
+                            {nearbyProp.title || nearbyProp.name}
                           </h3>
                           <span className="text-xl font-bold text-dnx-blue">
                             {formatPrice(nearbyProp.price)}
@@ -898,7 +958,11 @@ export default function PropertyDetailPage({
                           <div className="flex items-center">
                             <Maximize className="h-4 w-4 mr-1" />
                             <span>
-                              {formatSquareFeet(nearbyProp.square_feet || 0)}
+                              {formatSquareFeet(
+                                nearbyProp.lotSize ||
+                                  parseInt(nearbyProp.sqft || "0") ||
+                                  0
+                              )}
                             </span>
                           </div>
                         </div>
@@ -908,6 +972,19 @@ export default function PropertyDetailPage({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Property Interest Workflow */}
+          {property && (
+            <PropertyInterestWorkflow
+              property={{
+                ...property,
+                name: getPropertyTitle(),
+                title: getPropertyTitle(),
+              }}
+              isOpen={isInterestWorkflowOpen}
+              onClose={() => setIsInterestWorkflowOpen(false)}
+            />
           )}
         </div>
       </div>

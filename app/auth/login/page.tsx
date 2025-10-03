@@ -42,8 +42,12 @@ export default function LoginPage() {
       // Wait a moment for session to be established
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      const returnTo = new URLSearchParams(window.location.search).get(
+        "redirect"
+      );
+
       // Force a hard redirect to ensure session is properly updated
-      window.location.href = "/dashboard";
+      window.location.href = returnTo || "/dashboard";
     } catch (error: unknown) {
       if (error instanceof Error) {
         if (error.message.includes("Invalid login credentials")) {

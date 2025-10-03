@@ -10,11 +10,9 @@ export default async function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = null; // await getCurrentUser();
-
   return (
     <>
-      <Header user={user} />
+      <Header />
       <main className="flex-1">{children}</main>
       <Toaster />
       <Footer />

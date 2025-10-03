@@ -35,3 +35,36 @@ export const formatPercentage = (percentage: number, decimals: number = 1) =>
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(percentage / 100);
+
+/**
+ * Formats a date string to a localized date format
+ * @param dateString - The date string to format
+ * @returns Formatted date string (e.g., "Jan 15, 2024")
+ */
+export const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+/**
+ * Formats a date string to a relative time format
+ * @param dateString - The date string to format
+ * @returns Formatted relative time string (e.g., "2 days ago")
+ */
+export const formatRelativeTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInDays === 0) return "Today";
+  if (diffInDays === 1) return "Yesterday";
+  if (diffInDays < 7) return `${diffInDays} days ago`;
+  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+  if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
+  return `${Math.floor(diffInDays / 365)} years ago`;
+};

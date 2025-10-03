@@ -56,6 +56,10 @@ interface FormData {
   longitude: string;
   locationId: string;
   status?: string; // Only for editing
+  is_promotional: boolean;
+  promotional_price: string;
+  promotion_start_date: string;
+  promotion_end_date: string;
 }
 
 interface FloorPlanFile {
@@ -114,6 +118,10 @@ const initialFormData: FormData = {
   longitude: "",
   locationId: "",
   status: "active",
+  is_promotional: false,
+  promotional_price: "",
+  promotion_start_date: "",
+  promotion_end_date: "",
 };
 
 const AVAILABLE_AMENITIES = [
@@ -175,6 +183,10 @@ export default function UnifiedListingForm({
     longitude: "",
     locationId: "",
     amenities: [] as string[],
+    is_promotional: false,
+    promotional_price: "",
+    promotion_start_date: "",
+    promotion_end_date: "",
   });
   const [images, setImages] = useState<ImageFile[]>([]);
   const [existingImages, setExistingImages] = useState<ExistingImage[]>([]);
@@ -285,6 +297,12 @@ export default function UnifiedListingForm({
             longitude: property.longitude?.toString() || "",
             locationId: property.location_id || "",
             amenities: property.amenities ? JSON.parse(property.amenities) : [],
+            is_promotional: property.is_promotional || false,
+            promotional_price: property.promotional_price?.toString() || "",
+            promotion_start_date:
+              property.promotion_start_date?.split("T")[0] || "",
+            promotion_end_date:
+              property.promotion_end_date?.split("T")[0] || "",
           });
 
           // Format images for existing images state
@@ -313,7 +331,10 @@ export default function UnifiedListingForm({
     }
   }, [mode, listingId]);
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const handleInputChange = (
+    field: keyof FormData,
+    value: string | boolean
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null); // Clear error when user starts typing
   };
@@ -756,6 +777,12 @@ export default function UnifiedListingForm({
         location_id: formData.locationId || null,
         amenities: JSON.stringify(formData.amenities || []),
         floor_plan_url: null, // Will be updated after floor plan upload
+        is_promotional: formData.is_promotional,
+        promotional_price: formData.promotional_price
+          ? parseFloat(formData.promotional_price)
+          : null,
+        promotion_start_date: formData.promotion_start_date || null,
+        promotion_end_date: formData.promotion_end_date || null,
       };
 
       // Handle property creation/update
@@ -1211,6 +1238,83 @@ export default function UnifiedListingForm({
                 min="0"
                 step="0.01"
               />
+            </div>
+
+            {/* Promotional Pricing */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="is_promotional"
+                  checked={formData.is_promotional}
+                  onChange={(e) =>
+                    handleInputChange("is_promotional", e.target.checked)
+                  }
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="is_promotional" className="cursor-pointer">
+                  Enable Promotional Pricing
+                </Label>
+              </div>
+
+              {formData.is_promotional && (
+                <div className="pl-6 border-l-2 border-primary/20 space-y-4">
+                  <div>
+                    <Label htmlFor="promotional_price">
+                      Promotional Price *
+                    </Label>
+                    <Input
+                      id="promotional_price"
+                      type="number"
+                      value={formData.promotional_price}
+                      onChange={(e) =>
+                        handleInputChange("promotional_price", e.target.value)
+                      }
+                      placeholder="0"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="promotion_start_date">Start Date</Label>
+                      <Input
+                        id="promotion_start_date"
+                        type="date"
+                        value={formData.promotion_start_date}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "promotion_start_date",
+                            e.target.value
+                          )
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="promotion_end_date">End Date</Label>
+                      <Input
+                        id="promotion_end_date"
+                        type="date"
+                        value={formData.promotion_end_date}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "promotion_end_date",
+                            e.target.value
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Set a promotional price to display a special offer badge on
+                    this property. The promotional price will be shown alongside
+                    the regular price.
+                  </p>
+                </div>
+              )}
             </div>
 
             {formData.category !== "land" && (

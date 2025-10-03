@@ -209,7 +209,14 @@ export default function SearchableListings({
       <CardContent className="pb-2">
         <div className="flex justify-between mb-2">
           <span className="text-xl font-bold text-blue-600">
-            {listing.price}
+            {Number(listing.price.replace(/[$,]/g, "")).toLocaleString(
+              "en-US",
+              {
+                style: "currency",
+                currency: "NGN",
+                maximumFractionDigits: 0,
+              }
+            )}
           </span>
           <div className="flex space-x-3 text-sm text-gray-500">
             {listing?.category != "land" && <span>{listing.bedrooms} bd</span>}
@@ -217,10 +224,10 @@ export default function SearchableListings({
             {/* <span>{listing?.category == 'land' ? listing?.lotSize : listing.sqft} sqft</span> */}
           </div>
         </div>
-        <div className="flex justify-between text-sm text-gray-500">
+        {/* <div className="flex justify-between text-sm text-gray-500">
           <span>{listing.views} views</span>
           <span>{listing.inquiries} inquiries</span>
-        </div>
+        </div> */}
       </CardContent>
       <CardFooter className="flex justify-between pt-2 border-t">
         <div className="text-xs text-gray-500">
