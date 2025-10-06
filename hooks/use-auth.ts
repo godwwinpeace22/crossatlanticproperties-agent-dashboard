@@ -8,10 +8,11 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
+  logout: () => Promise<void>;
 }
 
 export function useAuth() {
-  const [authState, setAuthState] = useState<AuthState>({
+  const [authState, setAuthState] = useState<Omit<AuthState, "logout">>({
     user: null,
     loading: true,
     isAuthenticated: false,
@@ -72,5 +73,16 @@ export function useAuth() {
     };
   }, []);
 
-  return authState;
+  // Logout function
+  const logout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setAuthState({
+      user: null,
+      loading: false,
+      isAuthenticated: false,
+    });
+  };
+
+  return { ...authState, logout };
 }

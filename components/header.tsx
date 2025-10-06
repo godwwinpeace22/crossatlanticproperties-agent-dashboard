@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, MapPin, ChevronDown } from "lucide-react";
+import {
+  Menu,
+  X,
+  MapPin,
+  ChevronDown,
+  User as UserIcon,
+  LogOut,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -12,7 +19,7 @@ import { NotificationBell } from "@/components/notification-bell";
 
 export function Header() {
   const { locations, isLoading } = useLocations();
-  const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center">
@@ -95,17 +102,55 @@ export function Header() {
           {isAuthenticated ? (
             <>
               <NotificationBell />
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="hidden md:flex"
-              >
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-              <Button size="sm" asChild className="hidden md:flex">
-                <Link href="/dashboard/profile">My Profile</Link>
-              </Button>
+              <div className="relative group hidden md:flex items-center">
+                <div className="flex items-center cursor-pointer">
+                  {user?.user_metadata?.avatar_url ? (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt="User Avatar"
+                      className="w-8 h-8 rounded-full object-cover border mr-2"
+                    />
+                  ) : (
+                    <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mr-2">
+                      <UserIcon className="w-5 h-5 text-muted-foreground" />
+                    </span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1 px-2"
+                  >
+                    Account
+                    <ChevronDown className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+                <div className="absolute right-0 top-full mt-1 w-48 bg-background border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100]">
+                  <div className="py-1">
+                    <Link
+                      href="/dashboard"
+                      className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/dashboard/settings"
+                      className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
+                    >
+                      Settings
+                    </Link>
+                    <button
+                      onClick={async () => {
+                        await logout();
+                        window.location.href = "/";
+                      }}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-muted transition-colors text-left border-t mt-1"
+                      type="button"
+                    >
+                      <LogOut className="w-4 h-4" /> Logout
+                    </button>
+                  </div>
+                </div>
+              </div>
             </>
           ) : (
             <>
@@ -224,11 +269,20 @@ export function Header() {
                       Dashboard
                     </Link>
                     <Link
-                      href="/dashboard/profile"
+                      href="/dashboard/settings"
                       className="transition-colors hover:text-orange-500"
                     >
-                      My Profile
+                      Settings
                     </Link>
+                    <button
+                      onClick={async () => {
+                        await logout();
+                        window.location.href = "/";
+                      }}
+                      className="transition-colors hover:text-orange-500 text-left flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" /> Logout
+                    </button>
                   </>
                 ) : (
                   <>

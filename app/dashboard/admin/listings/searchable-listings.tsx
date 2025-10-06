@@ -54,7 +54,7 @@ interface Listing {
 }
 
 interface SearchableListingsProps {
-  listings: Listing[];
+  initialListings: Listing[];
   counts: {
     all: number;
     active?: number;
@@ -62,19 +62,96 @@ interface SearchableListingsProps {
     sold?: number;
     withdrawn?: number;
   };
+  hasMore: boolean;
+  pageSize: number;
 }
 
 export default function SearchableListings({
-  listings,
+  initialListings,
   counts,
+  hasMore: initialHasMore,
+  pageSize,
 }: SearchableListingsProps) {
+  const [listings, setListings] = useState<Listing[]>(initialListings);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"title" | "price" | "updated">(
     "updated"
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [page, setPage] = useState(1);
   const router = useRouter();
   const { toast } = useToast();
+
+  // Load more listings function
+  const loadMore = async () => {
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data: properties, count } = await supabase
+        .from("properties")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (properties) {
+        // Fetch images for new properties
+        const propertyIds = properties.map((p) => p.id);
+        const { data: images } = await supabase
+          .from("property_images")
+          .select("*")
+          .in("property_id", propertyIds);
+
+        const propertyImages = images || [];
+
+        // Convert to listings format
+        const newListings: Listing[] = properties.map((property: any) => {
+          const propertyImageList = propertyImages.filter(
+            (img) => img.property_id === property.id
+          );
+          const primaryImage =
+            propertyImageList.find((img) => img.isPrimary) ||
+            propertyImageList[0];
+
+          return {
+            id: property.id,
+            title: property.name || "Untitled Property",
+            address: property.location || "Address not specified",
+            price: property.price.toString(),
+            bedrooms: 0,
+            bathrooms: 0,
+            sqft: 0,
+            status:
+              property.status === "available" ? "active" : property.status,
+            image: primaryImage?.url || "/placeholder.jpg",
+            views: 0,
+            inquiries: 0,
+            lastUpdated: new Date(property.updated_at).toLocaleDateString(),
+            category: property.category || "house",
+            purpose: "sale",
+            rentalStatus: property.status,
+          };
+        });
+
+        setListings([...listings, ...newListings]);
+        setPage(page + 1);
+        setHasMore((count || 0) > (page + 1) * pageSize);
+      }
+    } catch (error) {
+      console.error("Error loading more listings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load more properties",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Delete listing function
   const deleteListing = async (listingId: string | number, title: string) => {
@@ -374,6 +451,46 @@ export default function SearchableListings({
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Load More Button */}
+      {hasMore && (
+        <div className="flex justify-center mt-8">
+          <Button
+            onClick={loadMore}
+            disabled={loading}
+            size="lg"
+            variant="outline"
+          >
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Loading...
+              </>
+            ) : (
+              "Load More Properties"
+            )}
+          </Button>
+        </div>
+      )}
     </>
   );
 }

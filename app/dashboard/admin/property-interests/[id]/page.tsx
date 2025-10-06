@@ -17,6 +17,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PaymentApprovalList } from "@/components/payment-approval-list";
+import { PropertyInterestActions } from "@/components/property-interest-actions";
+
+// Cache for 3 minutes
+export const revalidate = 180;
 
 export default async function PropertyInterestDetailPage({
   params,
@@ -90,6 +94,8 @@ export default async function PropertyInterestDetailPage({
     .eq("property_interest_id", interest.id)
     .order("installment_number", { ascending: true });
 
+  console.log({ installmentPayments });
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { className: string }> = {
       payment_pending: {
@@ -129,11 +135,20 @@ export default async function PropertyInterestDetailPage({
             <ArrowLeft className="h-4 w-4 mr-2" />
           </Link>
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold">Property Interest Details</h1>
           <p className="text-muted-foreground">
             Review interest submission and manage payments
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {getStatusBadge(interest.status)}
+          <PropertyInterestActions
+            interestId={interest.id}
+            currentStatus={interest.status}
+            propertyPrice={interest.property?.price}
+            selectedPaymentPlan={interest.selected_payment_plan}
+          />
         </div>
       </div>
 
@@ -187,19 +202,21 @@ export default async function PropertyInterestDetailPage({
               </span>
             </div>
 
-            {interest.approved_at && (
+            {interest.reviewed_at && interest.status === "approved" && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Approved:</span>
+                <span className="text-sm text-muted-foreground">Reviewed:</span>
                 <span className="text-sm font-medium">
-                  {formatDate(interest.approved_at)}
+                  {formatDate(interest.reviewed_at)}
                 </span>
               </div>
             )}
 
-            {interest.notes && (
+            {interest.admin_notes && (
               <div className="pt-4 border-t border-gray-100">
-                <div className="text-sm text-muted-foreground mb-1">Notes:</div>
-                <div className="text-sm">{interest.notes}</div>
+                <div className="text-sm text-muted-foreground mb-1">
+                  Admin Notes:
+                </div>
+                <div className="text-sm">{interest.admin_notes}</div>
               </div>
             )}
 

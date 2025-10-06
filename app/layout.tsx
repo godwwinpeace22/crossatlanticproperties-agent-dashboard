@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 // import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SWRProvider } from "@/components/swr-provider";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,6 +27,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SWRProvider>{children}</SWRProvider>
+          <Toaster />
         </ThemeProvider>
         {/* <Analytics /> */}
       </body>

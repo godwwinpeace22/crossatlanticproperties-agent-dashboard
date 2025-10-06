@@ -6,6 +6,9 @@ import Link from "next/link";
 import SearchableListings from "./searchable-listings";
 import { createClient } from "@/lib/supabase/server";
 
+// Cache for 3 minutes
+export const revalidate = 180;
+
 // Types for our properties from Supabase (based on the actual table structure)
 interface Property {
   id: string; // UUID in the database
@@ -55,7 +58,10 @@ interface ListingsResponse {
   };
 }
 
-async function getListings(): Promise<ListingsResponse> {
+async function getListings(
+  page: number = 1,
+  pageSize: number = 12
+): Promise<ListingsResponse & { totalPages: number; currentPage: number }> {
   const supabase = await createClient();
 
   try {
@@ -69,11 +75,21 @@ async function getListings(): Promise<ListingsResponse> {
       redirect("/login");
     }
 
-    // Fetch properties from Supabase
+    // Calculate pagination range
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    // Fetch total count
+    const { count: totalCount } = await supabase
+      .from("properties")
+      .select("*", { count: "exact", head: true });
+
+    // Fetch properties from Supabase with pagination
     const { data: properties, error } = await supabase
       .from("properties")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
     if (error) {
       console.error("Error fetching properties:", error);
@@ -140,6 +156,8 @@ async function getListings(): Promise<ListingsResponse> {
       .eq("id", user.id)
       .single();
 
+    const totalPages = Math.ceil((totalCount || 0) / pageSize);
+
     return {
       listings,
       counts,
@@ -148,6 +166,8 @@ async function getListings(): Promise<ListingsResponse> {
         accountType: profile?.account_type || "agent",
         name: profile?.full_name || user.email || "User",
       },
+      totalPages,
+      currentPage: page,
     };
   } catch (error) {
     console.error("Error fetching listings:", error);
@@ -156,13 +176,17 @@ async function getListings(): Promise<ListingsResponse> {
       listings: [],
       counts: { all: 0 },
       user: { id: "", accountType: "", name: "" },
+      totalPages: 0,
+      currentPage: 1,
     };
   }
 }
 
 export default async function ListingsPage() {
-  const data = await getListings();
-  const { listings, counts, user } = data;
+  const pageSize = 12;
+  const data = await getListings(1, pageSize);
+  const { listings, counts, user, totalPages } = data;
+  const hasMore = totalPages > 1;
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -187,7 +211,12 @@ export default async function ListingsPage() {
         </div>
       ) : (
         <Suspense fallback={<div>Loading listings...</div>}>
-          <SearchableListings listings={listings} counts={counts} />
+          <SearchableListings
+            initialListings={listings}
+            counts={counts}
+            hasMore={hasMore}
+            pageSize={pageSize}
+          />
         </Suspense>
       )}
     </div>

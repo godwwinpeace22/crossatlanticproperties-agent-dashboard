@@ -10,6 +10,9 @@ import {
 import { Users, TrendingUp, DollarSign } from "lucide-react";
 import { formatCurrency, formatNumber } from "@/lib/format";
 
+// Cache for 5 minutes
+export const revalidate = 300;
+
 export default async function NetworkPage() {
   const supabase = await createClient();
 

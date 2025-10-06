@@ -8,6 +8,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { Upload, FileText, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { KYCFormData, BuyerType } from "@/lib/types";
@@ -128,7 +130,7 @@ export function KYCForm({
 }: KYCFormProps) {
   const { toast } = useToast();
   const [files, setFiles] = useState<FileUploads>({});
-  const [step, setStep] = useState<"info" | "documents" | "payment">("info");
+  const [step, setStep] = useState<"info" | "documents">("info");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   // Initialize form hook at the top level - always called in the same order
@@ -295,8 +297,8 @@ export function KYCForm({
         </Label>
 
         {!hasFiles ? (
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-            <div className="text-center">
+          <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6">
+            <div className="text-center pointer-events-none">
               <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <div className="text-sm text-gray-600 mb-2">
                 Click to upload or drag and drop
@@ -363,8 +365,8 @@ export function KYCForm({
 
             {/* Add more files button for multiple uploads */}
             {multiple && (
-              <div className="border-2 border-dashed border-gray-200 rounded-lg p-3">
-                <div className="text-center">
+              <div className="relative border-2 border-dashed border-gray-200 rounded-lg p-3">
+                <div className="text-center pointer-events-none">
                   <div className="text-xs text-gray-500 mb-1">
                     Add more files
                   </div>
@@ -391,21 +393,77 @@ export function KYCForm({
     );
   };
 
+  const steps = [
+    { key: "info", label: "Information", number: 1 },
+    { key: "documents", label: "Documents", number: 2 },
+  ];
+
+  const currentStepIndex = steps.findIndex((s) => s.key === step);
+  const progress = ((currentStepIndex + 1) / steps.length) * 100;
+
+  const ProgressIndicator = () => (
+    <div className="mb-6">
+      <div className="flex justify-between mb-2">
+        {steps.map((s, index) => (
+          <div
+            key={s.key}
+            className={`flex items-center ${
+              index < steps.length - 1 ? "flex-1" : ""
+            }`}
+          >
+            <div className="flex flex-col items-center">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  index <= currentStepIndex
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {s.number}
+              </div>
+              <span
+                className={`text-xs mt-1 ${
+                  index <= currentStepIndex
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {s.label}
+              </span>
+            </div>
+            {index < steps.length - 1 && (
+              <div className="flex-1 h-[2px] mx-2 mt-[-20px]">
+                <div
+                  className={`h-full ${
+                    index < currentStepIndex ? "bg-primary" : "bg-muted"
+                  }`}
+                />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <Progress value={progress} className="h-2" />
+    </div>
+  );
+
   if (step === "info") {
     return (
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
+      <Card className="flex flex-col max-h-full">
+        <CardHeader className="flex-shrink-0">
           <CardTitle>KYC Information Form</CardTitle>
           <CardDescription>
             Please provide accurate information for Know Your Customer
             verification. All fields marked with * are required.
           </CardDescription>
+          <ProgressIndicator />
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 overflow-y-auto">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(() => setStep("documents"))}
               className="space-y-6"
+              id="kyc-info-form"
             >
               {/* Buyer Type Selection */}
               <FormField
@@ -700,31 +758,33 @@ export function KYCForm({
                   </FormItem>
                 )}
               />
-
-              <div className="flex justify-between pt-6">
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  Cancel
-                </Button>
-                <Button type="submit">Next: Upload Documents</Button>
-              </div>
             </form>
           </Form>
         </CardContent>
+        <CardFooter className="flex-shrink-0 flex justify-between">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" form="kyc-info-form">
+            Next: Upload Documents
+          </Button>
+        </CardFooter>
       </Card>
     );
   }
 
   if (step === "documents") {
     return (
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
+      <Card className="flex flex-col max-h-full">
+        <CardHeader className="flex-shrink-0">
           <CardTitle>Document Upload</CardTitle>
           <CardDescription>
             Please upload the required documents for verification. All documents
             should be clear and readable.
           </CardDescription>
+          <ProgressIndicator />
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="flex-1 overflow-y-auto space-y-6">
           <FileUploadArea
             label="Government ID (National ID, Passport, Driver's License)"
             fileType="government_id"
@@ -748,98 +808,55 @@ export function KYCForm({
               required
             />
           )}
-
-          <div className="flex justify-between pt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setStep("info")}
-            >
-              Back
-            </Button>
-            <Button onClick={() => setStep("payment")}>Next: Payment</Button>
-          </div>
         </CardContent>
-      </Card>
-    );
-  }
+        <CardFooter className="flex-shrink-0 flex justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setStep("info")}
+          >
+            Back
+          </Button>
+          <Button
+            onClick={async () => {
+              // Validate required documents
+              if (!files.government_id) {
+                toast({
+                  title: "Error",
+                  description: "Please upload your Government ID",
+                  variant: "destructive",
+                });
+                return;
+              }
+              if (!files.proof_of_address) {
+                toast({
+                  title: "Error",
+                  description: "Please upload your Proof of Address",
+                  variant: "destructive",
+                });
+                return;
+              }
+              if (
+                watchedBuyerType === "company" &&
+                (!files.business_documents ||
+                  files.business_documents.length === 0)
+              ) {
+                toast({
+                  title: "Error",
+                  description: "Please upload your Business Documents",
+                  variant: "destructive",
+                });
+                return;
+              }
 
-  if (step === "payment") {
-    return (
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>Application Fee Payment</CardTitle>
-          <CardDescription>
-            A one-time application fee of ₦10,000 is required to process your
-            KYC application. This fee is non-refundable and applies per user
-            account.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-900 mb-2">
-              Payment Details
-            </h3>
-            <div className="space-y-2 text-sm text-blue-800">
-              <div>
-                <strong>Amount:</strong> ₦10,000.00
-              </div>
-              <div>
-                <strong>Account Name:</strong> Your Company Name
-              </div>
-              <div>
-                <strong>Account Number:</strong> 1234567890
-              </div>
-              <div>
-                <strong>Bank:</strong> Sample Bank
-              </div>
-              <div>
-                <strong>Purpose:</strong> KYC Application Fee
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <h4 className="font-medium text-yellow-800 mb-1">
-              Important Notes:
-            </h4>
-            <ul className="text-sm text-yellow-700 space-y-1">
-              <li>• This is a one-time fee per user account</li>
-              <li>• Fee is required before KYC processing begins</li>
-              <li>• Upload payment proof after making the transfer</li>
-              <li>
-                • Processing time is 2-3 business days after payment
-                confirmation
-              </li>
-            </ul>
-          </div>
-
-          <FileUploadArea
-            label="Payment Proof (Bank Transfer Receipt, Screenshot)"
-            fileType="application_fee_payment_proof"
-            accept=".jpg,.jpeg,.png,.pdf"
-            required
-          />
-
-          <div className="flex justify-between pt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setStep("documents")}
-            >
-              Back
-            </Button>
-            <Button
-              onClick={async () => {
-                const formData = form.getValues();
-                await onFormSubmit(formData);
-              }}
-              disabled={isSubmitting || !files.application_fee_payment_proof}
-            >
-              {isSubmitting ? "Submitting..." : "Submit KYC Application"}
-            </Button>
-          </div>
-        </CardContent>
+              const formData = form.getValues();
+              await onFormSubmit(formData);
+            }}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Submitting..." : "Submit KYC Application"}
+          </Button>
+        </CardFooter>
       </Card>
     );
   }

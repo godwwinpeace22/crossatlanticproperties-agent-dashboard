@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -20,6 +21,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Percent, Save, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -150,191 +161,203 @@ export function CommissionSettings({ settings }: CommissionSettingsProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Commission Settings</CardTitle>
-        <CardDescription>
-          Configure commission percentages for each level in the MLM hierarchy
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {/* Current Settings Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Level</TableHead>
-                  <TableHead>Commission Percentage</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {settings.map((setting) => (
-                  <TableRow key={setting.id}>
-                    <TableCell className="font-medium">
-                      Level {setting.level}
-                    </TableCell>
+    <div className="flex-col flex space-y-5">
+      <Card>
+        <CardHeader>
+          <CardTitle>Commission Settings</CardTitle>
+          <CardDescription>
+            Configure commission percentages for each level in the MLM hierarchy
+          </CardDescription>
+          <CardAction>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" /> Add New
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Add New Commission Level</DialogTitle>
+                </DialogHeader>
 
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        {editingSettings[setting.id] !== undefined ? (
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="100"
-                            value={editingSettings[setting.id]}
-                            onChange={(e) =>
-                              handlePercentageChange(setting.id, e.target.value)
-                            }
-                            className="w-20"
-                          />
-                        ) : (
-                          <span className="flex items-center">
-                            <Percent className="h-4 w-4 mr-1 text-muted-foreground" />
-                            {Number(setting.percentage).toFixed(2)}%
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
+                <div className="flex gap-4 items-end pt-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="newLevel">Level</Label>
+                    <Input
+                      id="newLevel"
+                      type="number"
+                      min="1"
+                      value={newLevel}
+                      onChange={(e) => setNewLevel(e.target.value)}
+                      placeholder="6"
+                      className="w-20"
+                    />
+                  </div>
 
-                    <TableCell className="text-muted-foreground">
-                      {setting.level === 1 && "Direct downline commission"}
-                      {setting.level === 2 && "Second level commission"}
-                      {setting.level === 3 && "Third level commission"}
-                      {setting.level > 3 && `Level ${setting.level} commission`}
-                    </TableCell>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPercentage">Percentage</Label>
+                    <Input
+                      id="newPercentage"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={newPercentage}
+                      onChange={(e) => setNewPercentage(e.target.value)}
+                      placeholder="0.25"
+                      className="w-24"
+                    />
+                  </div>
+                </div>
 
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        {editingSettings[setting.id] !== undefined ? (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSave(setting.id)}
-                              disabled={isLoading}
-                            >
-                              <Save className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const newEditingSettings = {
-                                  ...editingSettings,
-                                };
-                                delete newEditingSettings[setting.id];
-                                setEditingSettings(newEditingSettings);
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button
+                    onClick={handleAddLevel}
+                    disabled={!newLevel || !newPercentage || isLoading}
+                  >
+                    Save
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </CardAction>
+        </CardHeader>
+
+        <CardContent>
+          <div className="space-y-6">
+            {/* Current Settings Table */}
+            <div className="rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Level</TableHead>
+                    <TableHead>Commission Percentage</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {settings.map((setting) => (
+                    <TableRow key={setting.id}>
+                      <TableCell className="font-medium">
+                        Level {setting.level}
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          {editingSettings[setting.id] !== undefined ? (
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              value={editingSettings[setting.id]}
+                              onChange={(e) =>
                                 handlePercentageChange(
                                   setting.id,
-                                  setting.percentage
+                                  e.target.value
                                 )
                               }
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDelete(setting.id)}
-                              disabled={isLoading}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                              className="w-20"
+                            />
+                          ) : (
+                            <span className="flex items-center">
+                              <Percent className="h-4 w-4 mr-1 text-muted-foreground" />
+                              {Number(setting.percentage).toFixed(2)}%
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="text-muted-foreground">
+                        {setting.level === 1 && "Direct downline commission"}
+                        {setting.level === 2 && "Second level commission"}
+                        {setting.level === 3 && "Third level commission"}
+                        {setting.level > 3 &&
+                          `Level ${setting.level} commission`}
+                      </TableCell>
+
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {editingSettings[setting.id] !== undefined ? (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSave(setting.id)}
+                                disabled={isLoading}
+                              >
+                                <Save className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const newEditingSettings = {
+                                    ...editingSettings,
+                                  };
+                                  delete newEditingSettings[setting.id];
+                                  setEditingSettings(newEditingSettings);
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handlePercentageChange(
+                                    setting.id,
+                                    setting.percentage
+                                  )
+                                }
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDelete(setting.id)}
+                                disabled={isLoading}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Add New Level */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">
-                Add New Commission Level
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4 items-end">
-                <div className="space-y-2">
-                  <Label htmlFor="newLevel">Level</Label>
-                  <Input
-                    id="newLevel"
-                    type="number"
-                    min="1"
-                    value={newLevel}
-                    onChange={(e) => setNewLevel(e.target.value)}
-                    placeholder="6"
-                    className="w-20"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="newPercentage">Percentage</Label>
-                  <Input
-                    id="newPercentage"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    value={newPercentage}
-                    onChange={(e) => setNewPercentage(e.target.value)}
-                    placeholder="0.25"
-                    className="w-24"
-                  />
-                </div>
-
-                <Button
-                  onClick={handleAddLevel}
-                  disabled={!newLevel || !newPercentage || isLoading}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Level
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Commission Structure Info */}
-          <div className="p-4 bg-muted rounded-lg">
-            <h4 className="font-semibold mb-2">
-              How Commission Calculation Works
-            </h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>
-                • When a payment is approved, commissions are calculated for all
-                uplines
-              </li>
-              <li>
-                • Each level receives the specified percentage of the sale
-                amount
-              </li>
-              <li>
-                • Commissions are created as individual records for transparency
-              </li>
-              <li>• Changes to commission rates only affect future sales</li>
-            </ul>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Commission Structure Info */}
+      <div className="p-4 bg-muted rounded-lg">
+        <h4 className="font-semibold mb-2">How Commission Calculation Works</h4>
+        <ul className="text-sm text-muted-foreground space-y-1">
+          <li>
+            • When a payment is approved, commissions are calculated for all
+            uplines
+          </li>
+          <li>
+            • Each level receives the specified percentage of the sale amount
+          </li>
+          <li>
+            • Commissions are created as individual records for transparency
+          </li>
+          <li>• Changes to commission rates only affect future sales</li>
+        </ul>
+      </div>
+    </div>
   );
 }

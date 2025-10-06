@@ -1,16 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Plus, MapPin, DollarSign } from "lucide-react";
-import { Building2 } from "lucide-react"; // Declared the Building2 variable
+import { Plus } from "lucide-react";
+import { Building2 } from "lucide-react";
+import { PropertiesGrid } from "@/components/properties-grid";
+import { Card, CardContent } from "@/components/ui/card";
+
+// Cache for 3 minutes
+export const revalidate = 180;
 
 export default async function PropertiesPage() {
   const supabase = await createClient();
@@ -27,13 +25,22 @@ export default async function PropertiesPage() {
     .eq("id", user.id)
     .single();
 
-  // Get all properties
-  const { data: properties } = await supabase
+  const pageSize = 12;
+
+  // Get total count
+  const { count: totalCount } = await supabase
+    .from("properties")
+    .select("*", { count: "exact", head: true });
+
+  // Get initial properties
+  const { data: initialProperties } = await supabase
     .from("properties")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(0, pageSize - 1);
 
   const isAdmin = profile?.role === "admin";
+  const hasMore = (totalCount || 0) > pageSize;
 
   return (
     <div className="space-y-6">
@@ -56,7 +63,7 @@ export default async function PropertiesPage() {
         )}
       </div>
 
-      {!properties || properties.length === 0 ? (
+      {!initialProperties || initialProperties.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
@@ -77,73 +84,12 @@ export default async function PropertiesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {properties.map((property) => (
-            <Card key={property.id} className="overflow-hidden">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{property.name}</CardTitle>
-                  <Badge
-                    variant={
-                      property.status === "available" ? "default" : "secondary"
-                    }
-                  >
-                    {property.status}
-                  </Badge>
-                </div>
-                {property.location && (
-                  <CardDescription className="flex items-center">
-                    <MapPin className="mr-1 h-3 w-3" />
-                    {property.location}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {property.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {property.description}
-                    </p>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <DollarSign className="mr-1 h-4 w-4 text-green-600" />
-                      <span className="text-lg font-semibold">
-                        ${Number(property.price).toLocaleString()}
-                      </span>
-                    </div>
-                    {property.category && (
-                      <Badge variant="outline">{property.category}</Badge>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 bg-transparent"
-                      asChild
-                    >
-                      <Link href={`/dashboard/properties/${property.id}`}>
-                        View Details
-                      </Link>
-                    </Button>
-                    {isAdmin && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link
-                          href={`/dashboard/properties/${property.id}/edit`}
-                        >
-                          Edit
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <PropertiesGrid
+          initialProperties={initialProperties}
+          isAdmin={isAdmin}
+          hasMore={hasMore}
+          pageSize={pageSize}
+        />
       )}
     </div>
   );

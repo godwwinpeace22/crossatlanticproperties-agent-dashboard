@@ -25,6 +25,9 @@ import Link from "next/link";
 import { PropertyPaymentCard } from "@/components/property-payment-card";
 import { CopyReferralButton } from "@/components/copy-referral-button";
 
+// Cache for 2 minutes
+export const revalidate = 120;
+
 export default async function MyReferralsPage() {
   const supabase = await createClient();
 

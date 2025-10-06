@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { KYCApprovalsList } from "@/components/kyc-approvals-list";
 
+// Cache for 1 minute (approvals need to be relatively fresh)
+export const revalidate = 60;
+
 export default async function KYCApprovalsPage() {
   const supabase = await createClient();
 

@@ -107,11 +107,9 @@ ${details}`;
                           Our Headquarters
                         </h3>
                         <p className="text-muted-foreground">
-                          123 Innovation Way
+                          Block D flat 4, Sky Memorial Complex
                           <br />
-                          Nairobi, Kenya
-                          <br />
-                          00100
+                          Wuse Zone 5, FCT, Abuja, Nigeria
                         </p>
                       </div>
                     </CardContent>
@@ -128,7 +126,7 @@ ${details}`;
                           <br />
                           Support: support@crossatlanticproperties.com
                           <br />
-                          Partnerships: partners@crossatlanticproperties.com
+                          Partnerships: info@crossatlanticproperties.com
                         </p>
                       </div>
                     </CardContent>
@@ -141,11 +139,11 @@ ${details}`;
                       <div>
                         <h3 className="text-lg font-semibold mb-1">Call Us</h3>
                         <p className="text-muted-foreground">
-                          Main Office: +254 123 456 789
+                          Main Office: +234 708 611 2909
                           <br />
-                          Customer Support: +254 987 654 321
+                          Customer Support: +44 743 546 8699
                           <br />
-                          Hours: Monday-Friday, 8am-6pm EAT
+                          Hours: Monday-Friday, 8am-6pm WAT
                         </p>
                       </div>
                     </CardContent>
@@ -340,151 +338,36 @@ ${details}`;
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="aspect-video overflow-hidden rounded-lg mb-4">
-                    <Image
-                      src="/placeholder.svg?height=400&width=600"
-                      width={600}
-                      height={400}
-                      alt="Nairobi Office"
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">Nairobi, Kenya</h3>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 place-items-stretch lg:flex lg:justify-center lg:items-stretch">
+              <Card className="h-full min-h-[260px] flex flex-col">
+                <CardContent className="p-6 h-full flex flex-col grow">
+                  <h3 className="text-xl font-bold mb-2">Abuja, Nigeria</h3>
                   <p className="text-muted-foreground mb-4">
-                    123 Innovation Way
+                    Block D flat 4, Sky Memorial Complex
                     <br />
-                    Nairobi, Kenya
-                    <br />
-                    00100
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Hours:</strong> Monday-Friday, 8am-6pm EAT
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="aspect-video overflow-hidden rounded-lg mb-4">
-                    <Image
-                      src="/placeholder.svg?height=400&width=600"
-                      width={600}
-                      height={400}
-                      alt="Lagos Office"
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">Lagos, Nigeria</h3>
-                  <p className="text-muted-foreground mb-4">
-                    456 Victoria Island
-                    <br />
-                    Lagos, Nigeria
-                    <br />
-                    101233
+                    Wuse Zone 5, FCT, Abuja, Nigeria
                   </p>
                   <p className="text-sm text-muted-foreground">
                     <strong>Hours:</strong> Monday-Friday, 9am-5pm WAT
                   </p>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="aspect-video overflow-hidden rounded-lg mb-4">
-                    <Image
-                      src="/placeholder.svg?height=400&width=600"
-                      width={600}
-                      height={400}
-                      alt="Cape Town Office"
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">
-                    Cape Town, South Africa
-                  </h3>
+
+              <Card className="h-full min-h-[260px] flex flex-col">
+                <CardContent className="p-6 h-full flex flex-col grow">
+                  <h3 className="text-xl font-bold mb-2">Nottingham, UK</h3>
                   <p className="text-muted-foreground mb-4">
-                    789 Waterfront Blvd
+                    The Ingenuity Lab, C16 The Ingenuity Centre
                     <br />
-                    Cape Town, South Africa
+                    Jubilee Campus, University of Nottingham
                     <br />
-                    8001
+                    Nottingham, UK
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    <strong>Hours:</strong> Monday-Friday, 8:30am-5:30pm SAST
+                    <strong>Hours:</strong> Monday-Friday, 9am-5pm GMT
                   </p>
                 </CardContent>
               </Card>
-            </div>
-          </div>
-        </section>
-
-        <section className="w-full py-12 md:py-16 lg:py-20">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
-                  Frequently Asked Questions
-                </h2>
-                <p className="max-w-[700px] text-muted-foreground md:text-xl/relaxed">
-                  Find answers to common questions about our platform.
-                </p>
-              </div>
-              <div className="grid w-full max-w-3xl gap-4 mt-8">
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-bold mb-2">
-                      How do virtual tours work?
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Our virtual tours use 3D scanning technology to create
-                      immersive, interactive experiences of properties. You can
-                      navigate through spaces, view details, and get a realistic
-                      feel for the property from anywhere in the world.
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-bold mb-2">
-                      Are the property listings verified?
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Yes, we verify all property listings on our platform to
-                      ensure accuracy and authenticity. Our team works directly
-                      with property owners and agents to validate information
-                      before it's published.
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-bold mb-2">
-                      How can I list my property on your platform?
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Property owners and agents can register on our platform
-                      and submit their listings through our user-friendly
-                      dashboard. We offer various packages for listings,
-                      including options for virtual tours and enhanced
-                      visibility.
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-bold mb-2">
-                      What areas do you currently cover?
-                    </h3>
-                    <p className="text-muted-foreground">
-                      We currently cover major cities across Africa, including
-                      Nairobi, Lagos, Cape Town, Cairo, Accra, and more. We're
-                      continuously expanding our coverage to include more
-                      regions and properties.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
             </div>
           </div>
         </section>

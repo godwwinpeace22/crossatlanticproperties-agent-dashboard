@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PropertyInterestsTable } from "@/components/property-interests-table";
 
+// Cache for 2 minutes
+export const revalidate = 120;
+
 export default async function PropertyInterestsPage() {
   const supabase = await createClient();
 

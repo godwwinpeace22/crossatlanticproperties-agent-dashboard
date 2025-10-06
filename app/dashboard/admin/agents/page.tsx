@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AgentManagement } from "@/components/agent-management";
 import { Users, UserCheck, UserX, TrendingUp } from "lucide-react";
 
+// Cache for 3 minutes
+export const revalidate = 180;
+
 export default async function AdminAgentsPage() {
   const supabase = await createClient();
 

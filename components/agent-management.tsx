@@ -27,8 +27,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, UserCheck, UserX, DollarSign, Users } from "lucide-react";
+import { Search, UserCheck, UserX, DollarSign, Users, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { formatDate } from "@/lib/format";
+import Link from "next/link";
 
 interface Agent {
   id: string;
@@ -70,6 +72,7 @@ export function AgentManagement({ agents }: AgentManagementProps) {
     setIsLoading(agentId);
 
     try {
+      // if()
       const { error } = await supabase
         .from("profiles")
         .update({ status: newStatus })
@@ -186,7 +189,13 @@ export function AgentManagement({ agents }: AgentManagementProps) {
                 </TableRow>
               ) : (
                 filteredAgents.map((agent) => (
-                  <TableRow key={agent.id}>
+                  <TableRow
+                    key={agent.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() =>
+                      router.push(`/dashboard/admin/agents/${agent.id}`)
+                    }
+                  >
                     <TableCell>
                       <div>
                         <div className="font-medium">
@@ -196,8 +205,7 @@ export function AgentManagement({ agents }: AgentManagementProps) {
                           {agent.email}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Joined{" "}
-                          {new Date(agent.created_at).toLocaleDateString()}
+                          Joined {formatDate(agent.created_at)}
                         </div>
                       </div>
                     </TableCell>
@@ -238,30 +246,51 @@ export function AgentManagement({ agents }: AgentManagementProps) {
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-center">
+                    <TableCell
+                      className="text-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex items-center justify-center gap-1">
-                        {agent.status === "active" ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleStatusChange(agent.id, "suspended")
-                            }
-                            disabled={isLoading === agent.id}
-                          >
-                            <UserX className="h-3 w-3" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleStatusChange(agent.id, "active")
-                            }
-                            disabled={isLoading === agent.id}
-                          >
-                            <UserCheck className="h-3 w-3" />
-                          </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          asChild
+                          className="cursor-pointer"
+                        >
+                          <Link href={`/dashboard/admin/agents/${agent.id}`}>
+                            <Eye className="h-3 w-3" />
+                          </Link>
+                        </Button>
+                        {agent?.role !== "admin" && (
+                          <>
+                            {agent.status === "active" ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusChange(agent.id, "suspended");
+                                }}
+                                disabled={isLoading === agent.id}
+                                className="cursor-pointer"
+                              >
+                                <UserX className="h-3 w-3" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusChange(agent.id, "active");
+                                }}
+                                disabled={isLoading === agent.id}
+                                className="cursor-pointer"
+                              >
+                                <UserCheck className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </>
                         )}
                       </div>
                     </TableCell>

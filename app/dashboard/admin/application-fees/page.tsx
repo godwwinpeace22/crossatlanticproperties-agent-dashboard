@@ -35,14 +35,14 @@ export default async function InterestPaymentsPage() {
   }
 
   // Fetch interest payments with related data
-  const { data: payments } = await supabase
+  const { data: payments, error } = await supabase
     .from("interest_payments")
     .select(
       `
       *,
       property:properties(id, name, price, city, state),
       user:profiles!interest_payments_user_id_fkey(id, full_name, email),
-      property_interest:property_interests(id, status, selected_payment_plan)
+      property_interest:property_interests!interest_payments_property_interest_id_fkey(id, status, selected_payment_plan)
     `
     )
     .order("created_at", { ascending: false });
