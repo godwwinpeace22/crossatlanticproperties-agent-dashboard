@@ -17,15 +17,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/client";
 
-export default function RegisterPage() {
+export default function AgentRegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState("buyer");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [message, setMessage] = useState("");
@@ -38,15 +35,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const supabase = createClient();
     setIsLoading(true);
     setErrors(null);
-    setMessage("");
-
-    const supabase = createClient();
 
     const formData = new FormData(e.currentTarget);
-
-    const accountType = activeTab;
 
     const data = {
       firstName: formData.get("firstName") as string,
@@ -54,7 +47,6 @@ export default function RegisterPage() {
       email: formData.get("email") as string,
       password: formData.get("password") as string,
       confirmPassword: formData.get("confirmPassword") as string,
-      accountType,
     };
 
     if (data?.password !== data?.confirmPassword) {
@@ -70,7 +62,7 @@ export default function RegisterPage() {
         options: {
           data: {
             full_name: `${data.firstName} ${data.lastName}`,
-            role: "buyer",
+            role: "agent",
           },
         },
       });
@@ -85,29 +77,15 @@ export default function RegisterPage() {
         if (signInError) throw signInError;
       }
 
-      // Redirect to registration flow instead of dashboard
-      const finalRedirect = redirectUrl || "/dashboard";
-      router.push(finalRedirect);
+      // Redirect to dashboard where agent workflow will be shown
+      router.push("/dashboard");
     } catch (error: unknown) {
-      // setErrors({
-      //   general: error instanceof Error ? error.message : "An error occurred",
-      // });
-      setMessage(error instanceof Error ? error.message : "An error occurred");
-
-      console.log(error);
+      setErrors({
+        general: error instanceof Error ? error.message : "An error occurred",
+      });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleGoogleLogin = async () => {
-    // Placeholder for future OAuth implementation
-    setMessage("Social login not implemented yet");
-  };
-
-  const handleFacebookLogin = async () => {
-    // Placeholder for future OAuth implementation
-    setMessage("Social login not implemented yet");
   };
 
   return (
@@ -116,20 +94,24 @@ export default function RegisterPage() {
         <div className="hidden flex-col space-y-4 md:flex">
           <div className="space-y-2 text-center md:text-left">
             <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-              Join Our Community
+              Become an Agent
             </h1>
             <p className="text-muted-foreground md:text-xl">
-              Create an account to start your real estate journey
+              Join our network of professional real estate agents and start
+              earning commissions
             </p>
           </div>
-          <div className="relative aspect-video overflow-hidden rounded-xl">
-            <Image
-              src="/about1.jpg?height=800&width=1200"
-              width={1200}
-              height={800}
-              alt="Register"
-              className="object-cover"
-            />
+          <div className="relative aspect-video overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center">
+            <div className="text-center text-white p-8">
+              <div className="text-6xl mb-4">🏢</div>
+              <h3 className="text-2xl font-bold mb-2">Agent Benefits</h3>
+              <ul className="text-left space-y-2">
+                <li>• Multi-level commission structure</li>
+                <li>• Professional tools and support</li>
+                <li>• Build your own network</li>
+                <li>• Flexible working schedule</li>
+              </ul>
+            </div>
           </div>
         </div>
         <Card className="mx-auto max-w-md">
@@ -144,10 +126,10 @@ export default function RegisterPage() {
               />
             </div>
             <CardTitle className="text-2xl font-bold">
-              Create an Account
+              Agent Registration
             </CardTitle>
             <CardDescription>
-              Enter your information to create your account
+              Create your agent account to start earning commissions
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -156,9 +138,12 @@ export default function RegisterPage() {
                 <AlertDescription>{message}</AlertDescription>
               </Alert>
             )}
+            {errors?.general && (
+              <Alert variant="destructive">
+                <AlertDescription>{errors.general}</AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
-              <input type="hidden" name="accountType" value={activeTab} />
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First name</Label>
@@ -249,24 +234,24 @@ export default function RegisterPage() {
                   Password must be at least 8 characters long and include a mix
                   of uppercase letters, numbers, and symbols.
                 </p>
-                <div className="space-y-2 mt-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={showPassword ? "text" : "password"}
-                      className="pl-10 pr-10"
-                      required
-                    />
-                  </div>
-                  {errors?.confirmPassword && (
-                    <p className="text-sm text-destructive">
-                      {errors.confirmPassword}
-                    </p>
-                  )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showPassword ? "text" : "password"}
+                    className="pl-10"
+                    required
+                  />
                 </div>
+                {errors?.confirmPassword && (
+                  <p className="text-sm text-destructive">
+                    {errors.confirmPassword}
+                  </p>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox id="terms" required />
@@ -290,13 +275,23 @@ export default function RegisterPage() {
                   </Link>
                 </Label>
               </div>
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h4 className="font-semibold text-blue-900 mb-2">
+                  Next Steps:
+                </h4>
+                <p className="text-sm text-blue-800">
+                  After registration, you'll complete a verification process
+                  including KYC documents and agent requirements before your
+                  account is approved.
+                </p>
+              </div>
               <Button
                 className="w-full bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
                 size="lg"
                 type="submit"
                 disabled={isLoading}
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isLoading ? "Creating Agent Account..." : "Register as Agent"}
               </Button>
             </form>
           </CardContent>
@@ -315,12 +310,12 @@ export default function RegisterPage() {
               </Link>
             </p>
             <p className="text-center text-sm text-muted-foreground mt-2">
-              Want to become an agent?{" "}
+              Looking to buy property?{" "}
               <Link
-                href="/register-agent"
+                href="/register"
                 className="font-medium text-primary underline-offset-4 hover:underline"
               >
-                Agent Registration
+                Register as Buyer
               </Link>
             </p>
           </CardFooter>

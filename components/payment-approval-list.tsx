@@ -32,6 +32,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { getDocumentViewUrl } from "@/lib/document-upload";
 
 interface PaymentApprovalListProps {
   payments: any[];
@@ -347,6 +348,12 @@ export function PaymentApprovalList({
     );
   };
 
+  const openDocumentLink = async (document: any) => {
+    const url = await getDocumentViewUrl(document?.file_path);
+
+    window.open(url, "_blank");
+  };
+
   return (
     <>
       <div className="rounded-md border border-gray-100">
@@ -389,16 +396,15 @@ export function PaymentApprovalList({
                     {payment.payment_method?.replace(/_/g, " ") || "—"}
                   </TableCell>
                   <TableCell>
-                    {payment.payment_proof_url ? (
-                      <Button size="sm" variant="ghost" asChild className="h-8">
-                        <a
-                          href={payment.payment_proof_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View
-                        </a>
+                    {payment.user_document ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8"
+                        onClick={() => openDocumentLink(payment?.user_document)}
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
                       </Button>
                     ) : (
                       <span className="text-sm text-muted-foreground">—</span>

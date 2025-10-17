@@ -130,7 +130,39 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
     },
   ];
 
-  const userNavGroups = [
+  const buyerNavGroups = [
+    {
+      id: "overview",
+      label: "Overview",
+      icon: LayoutDashboard,
+      items: [{ href: "/dashboard", icon: Home, label: "Dashboard" }],
+    },
+
+    {
+      id: "property",
+      label: "Property Investment",
+      icon: Briefcase,
+      items: [
+        { href: "/dashboard/my-interests", icon: Heart, label: "My Interests" },
+        { href: "/dashboard/kyc", icon: Users, label: "KYC Status" },
+      ],
+    },
+    {
+      id: "account",
+      label: "Account",
+      icon: Wallet,
+      items: [
+        {
+          href: "/dashboard/notifications",
+          icon: Bell,
+          label: "Notifications",
+        },
+        { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+      ],
+    },
+  ];
+
+  const agentNavGroups = [
     {
       id: "overview",
       label: "Overview",
@@ -175,7 +207,7 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
     },
   ];
 
-  const navGroups = isAdmin ? adminNavGroups : userNavGroups;
+  const navGroups = isAdmin ? adminNavGroups : buyerNavGroups;
 
   const NavGroup = ({ group }: { group: (typeof navGroups)[0] }) => {
     const isOpen = openSections.includes(group.id);

@@ -15,7 +15,6 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
-import { KYCStatusCard } from "@/components/kyc-status-card";
 import { KYCForm } from "@/components/kyc-form";
 import { formatDate } from "@/lib/format";
 import Link from "next/link";
@@ -58,9 +57,6 @@ export default async function MyKYCPage() {
           personally
         </p>
       </div>
-
-      {/* KYC Status Overview */}
-      <KYCStatusCard kycSubmission={kycSubmission} />
 
       {/* KYC Form or Details */}
       <Card>
@@ -172,10 +168,7 @@ export default async function MyKYCPage() {
               )}
               <div className="flex gap-2">
                 <Button asChild>
-                  <Link href="/(main)/properties">Browse Properties</Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/dashboard/my-interests">View My Interests</Link>
+                  <Link href="/properties">Browse Properties</Link>
                 </Button>
               </div>
             </div>
@@ -220,44 +213,6 @@ export default async function MyKYCPage() {
               <Button>Update Application</Button>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Help Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Need Help?</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="font-medium mb-2">Required Documents</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>
-                  • Government-issued ID (passport, driver's license, or
-                  national ID)
-                </li>
-                <li>
-                  • Proof of address (utility bill or bank statement, not older
-                  than 3 months)
-                </li>
-                <li>• For companies: Business registration documents</li>
-                <li>• Application fee payment proof</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-medium mb-2">Processing Time</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Initial review: 2-3 business days</li>
-                <li>
-                  • Additional verification (if needed): 1-2 business days
-                </li>
-                <li>
-                  • You'll receive email notifications about status updates
-                </li>
-              </ul>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

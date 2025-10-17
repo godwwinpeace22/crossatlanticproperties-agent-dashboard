@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { uploadUserDocument } from "@/lib/document-upload";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ import {
   AlertTriangle,
   Loader2,
   WalletMinimal,
+  IdCardIcon,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
@@ -77,30 +79,37 @@ export function PropertyPaymentCard({
     setIsUploading(true);
 
     try {
-      let proofUrl = null;
+      let documentId = null;
 
       if (paymentProof) {
-        const fileExt = paymentProof.name.split(".").pop();
-        const fileName = `${selectedPayment.id}-${Date.now()}.${fileExt}`;
-        const filePath = `payment-proofs/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("documents")
-          .upload(filePath, paymentProof);
-
-        if (uploadError) throw uploadError;
-
+        // Get current user for document upload
         const {
-          data: { publicUrl },
-        } = supabase.storage.from("documents").getPublicUrl(filePath);
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error("User not authenticated");
 
-        proofUrl = publicUrl;
+        // Upload payment proof using centralized document system
+        const uploadedDoc = await uploadUserDocument({
+          file: paymentProof,
+          userId: user.id,
+          documentType: "purchase",
+          documentName: `Payment Proof - ${selectedPayment?.property_interests?.property?.name}`,
+          description: `Payment proof for installment payment ID: ${selectedPayment.id}`,
+          tags: [
+            "payment_proof",
+            "installment",
+            selectedPayment?.property_interests?.property?.name,
+          ],
+        });
+
+        documentId = uploadedDoc.id;
       }
 
       const { error: updateError } = await supabase
         .from("installment_payments")
         .update({
-          payment_proof_url: proofUrl,
+          payment_proof_document_id: documentId, // Store document ID instead of URL
+          payment_proof_url: null, // Keep old column null for new uploads
           transaction_reference: transactionRef,
           payment_method: paymentMethod,
           paid_amount: Number(paidAmount),
@@ -269,32 +278,35 @@ export function PropertyPaymentCard({
                           #{payment.installment_number}
                         </div>
                         <div className="min-w-0">
-                          {getPaymentStatusBadge(payment)}
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {formatDate(payment.due_date)}
-                            {payment.status === "paid" &&
-                              payment.payment_date && (
-                                <span className="text-green-600 font-medium ml-1">
-                                  • Paid {formatDate(payment.payment_date)}
-                                </span>
-                              )}
-                          </div>
+                          Installment {payment.installment_number}
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
                         <div className="text-sm font-bold text-foreground text-right">
                           {formatCurrency(Number(payment.amount))}
                         </div>
+                      </div>
+
+                      <div className="flex flex-col items-center">
+                        {getPaymentStatusBadge(payment)}
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {formatDate(payment.due_date)}
+                          {payment.status === "paid" &&
+                            payment.payment_date && (
+                              <span className="text-green-600 font-medium ml-1">
+                                • Paid {formatDate(payment.payment_date)}
+                              </span>
+                            )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
                         {payment.status !== "paid" &&
                           payment.status !== "pending_verification" && (
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 text-xs"
+                              className="h-7 text-xs bg-primary text-white cursor-pointer"
                               onClick={() => handleUploadProof(payment)}
                             >
-                              <Upload className="h-3 w-3 mr-1" />
-                              Upload
+                              Make Payment
                             </Button>
                           )}
                       </div>
@@ -323,17 +335,19 @@ export function PropertyPaymentCard({
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Amount Paid</Label>
+              <Label>Amount Paid*</Label>
               <Input
                 type="number"
                 value={paidAmount}
+                readOnly
+                disabled
                 onChange={(e) => setPaidAmount(e.target.value)}
                 placeholder="Enter amount paid"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Payment Method</Label>
+              <Label>Payment Method*</Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select payment method" />
@@ -349,7 +363,7 @@ export function PropertyPaymentCard({
             </div>
 
             <div className="space-y-2">
-              <Label>Transaction Reference</Label>
+              <Label>Transaction Reference (Optional)</Label>
               <Input
                 value={transactionRef}
                 onChange={(e) => setTransactionRef(e.target.value)}
@@ -358,11 +372,12 @@ export function PropertyPaymentCard({
             </div>
 
             <div className="space-y-2">
-              <Label>Payment Proof (Receipt/Screenshot)</Label>
+              <Label>Payment Proof (Receipt/Screenshot)*</Label>
               <Input
                 type="file"
                 accept="image/*,.pdf"
                 onChange={(e) => setPaymentProof(e.target.files?.[0] || null)}
+                required
               />
               <p className="text-xs text-muted-foreground">
                 Upload a receipt, bank statement, or screenshot as proof
@@ -380,7 +395,9 @@ export function PropertyPaymentCard({
             </Button>
             <Button
               onClick={handleSubmitProof}
-              disabled={isUploading || !paymentMethod || !paidAmount}
+              disabled={
+                isUploading || !paymentMethod || !paidAmount || !paymentProof
+              }
             >
               {isUploading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Submit for Verification

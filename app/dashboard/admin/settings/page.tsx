@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CommissionSettings } from "@/components/commission-settings";
 import { PropertyTypesManager } from "@/components/property-types-manager";
 import { LocationsManager } from "@/components/locations-manager";
+import { ApplicationFeeSettings } from "@/components/system-settings-manager";
 import {
   Card,
   CardContent,
@@ -46,13 +47,18 @@ export default async function AdminSettingsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="commissions" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="system-settings" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="system-settings">Application Fee</TabsTrigger>
           <TabsTrigger value="commissions">Commissions</TabsTrigger>
           <TabsTrigger value="properties">Property Types</TabsTrigger>
           <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="system">System Info</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="system-settings" className="space-y-4">
+          <ApplicationFeeSettings />
+        </TabsContent>
 
         <TabsContent value="commissions" className="space-y-4">
           <CommissionSettings settings={commissionSettings || []} />

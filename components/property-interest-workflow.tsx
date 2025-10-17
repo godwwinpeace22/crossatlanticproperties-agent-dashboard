@@ -43,6 +43,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { KYCForm } from "@/components/kyc-form";
 import { KYCStatusCard } from "@/components/kyc-status-card";
 import { createClient } from "@/lib/supabase/client";
+import { usePublicSystemSettings } from "@/hooks/use-system-settings";
 import {
   Property,
   KYCSubmission,
@@ -109,6 +110,7 @@ export function PropertyInterestWorkflow({
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { getSetting } = usePublicSystemSettings();
 
   // State management
   const [currentStep, setCurrentStep] = useState<WorkflowStep>("auth_check");
@@ -191,7 +193,7 @@ export function PropertyInterestWorkflow({
         .limit(1);
 
       if (kycError) {
-        console.error("Error fetching KYC:", kycError);
+        // console.error("Error fetching KYC:", kycError);
         setCurrentStep("kyc_check");
         setIsLoading(false);
         return;
@@ -200,16 +202,21 @@ export function PropertyInterestWorkflow({
       const latestKYC = kycData?.[0];
       setKYCSubmission(latestKYC || null);
 
-      // Determine next step based on KYC status
+      // Determine next step based on KYC status and system settings
+      const requireKYCApproval = getSetting(
+        "kyc_approval_required_for_payment",
+        false
+      );
+
       if (!latestKYC) {
-        setCurrentStep("kyc_check");
-      } else if (latestKYC.status === "approved") {
+        setCurrentStep("kyc_form");
+      } else if (latestKYC.status === "approved" || !requireKYCApproval) {
         setCurrentStep("payment_plan");
-      } else if (latestKYC.status === "pending") {
-        setCurrentStep("kyc_check");
+      } else if (latestKYC.status === "pending" && !requireKYCApproval) {
+        setCurrentStep("payment_plan");
       } else {
-        // rejected or needs_revision
-        setCurrentStep("kyc_check");
+        // rejected, needs_revision, or pending but requiring approval
+        setCurrentStep("payment_plan");
       }
     } catch (error) {
       console.error("Error checking auth/KYC status:", error);
@@ -221,7 +228,8 @@ export function PropertyInterestWorkflow({
 
   const handleSignInRedirect = () => {
     onClose();
-    router.push("/auth/login?redirect=/properties/" + property.id);
+    localStorage.setItem("redirect", `/properties/${property.id}`);
+    router.push("/login");
   };
 
   const handleKYCSubmit = async (formData: KYCFormData, files: FileUploads) => {
@@ -301,7 +309,7 @@ export function PropertyInterestWorkflow({
       if (kycError) throw kycError;
 
       setKYCSubmission(kycData);
-      setCurrentStep("kyc_check");
+      setCurrentStep("payment_plan");
 
       toast({
         title: "KYC Submitted Successfully",
@@ -616,35 +624,12 @@ export function PropertyInterestWorkflow({
 
       case "kyc_form":
         // Ensure authentication is verified before showing KYC form
-        if (!isAuthenticated || !user) {
-          return (
-            <div className="text-center p-6 space-y-4">
-              <User className="h-12 w-12 mx-auto text-red-600" />
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  Authentication Required
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  You must be signed in to complete KYC verification.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Button onClick={handleSignInRedirect} className="w-full">
-                  Sign In / Create Account
-                </Button>
-                <Button variant="outline" onClick={onClose} className="w-full">
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          );
-        }
 
         return (
           <div className="p-1">
             <KYCForm
               onSubmit={handleKYCSubmit}
-              onCancel={() => setCurrentStep("kyc_check")}
+              onCancel={() => setCurrentStep("payment_plan")}
               isSubmitting={isSubmittingKYC}
             />
           </div>
@@ -676,7 +661,40 @@ export function PropertyInterestWorkflow({
           );
         }
 
-        if (!kycSubmission || kycSubmission.status !== "approved") {
+        const requireKYCApproval = getSetting(
+          "kyc_approval_required_for_payment",
+          false
+        );
+
+        if (!kycSubmission) {
+          return (
+            <div className="text-center p-6 space-y-4">
+              <FileText className="h-12 w-12 mx-auto text-yellow-600" />
+              <div>
+                <h3 className="text-lg font-semibold mb-2">
+                  KYC Verification Required
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Please complete your KYC verification before selecting a
+                  payment plan.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => setCurrentStep("kyc_check")}
+                  className="w-full"
+                >
+                  Complete KYC Verification
+                </Button>
+                <Button variant="outline" onClick={onClose} className="w-full">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          );
+        }
+
+        if (requireKYCApproval && kycSubmission.status !== "approved") {
           return (
             <div className="text-center p-6 space-y-4">
               <FileText className="h-12 w-12 mx-auto text-yellow-600" />
@@ -763,7 +781,7 @@ export function PropertyInterestWorkflow({
             {/* Payment Timeframe */}
             {selectedPaymentPlan && selectedPaymentPlan !== "full" && (
               <div className="space-y-3">
-                <Label>Payment Timeframe (months):</Label>
+                <Label>Payment Timeframe:</Label>
                 <div className="flex gap-2">
                   {[6, 12, 18, 24].map((months) => (
                     <Button
@@ -774,7 +792,7 @@ export function PropertyInterestWorkflow({
                       size="sm"
                       onClick={() => setPaymentTimeframe(months)}
                     >
-                      {months}M
+                      {months} months
                     </Button>
                   ))}
                 </div>
@@ -885,7 +903,15 @@ export function PropertyInterestWorkflow({
           );
         }
 
-        if (!kycSubmission || kycSubmission.status !== "approved") {
+        const kycApprovalRequired = getSetting(
+          "kyc_approval_required_for_payment",
+          false
+        );
+
+        if (
+          !kycSubmission ||
+          (kycApprovalRequired && kycSubmission.status !== "approved")
+        ) {
           return (
             <div className="text-center p-6 space-y-4">
               <FileText className="h-12 w-12 mx-auto text-yellow-600" />
@@ -1033,7 +1059,7 @@ export function PropertyInterestWorkflow({
         );
 
       case "payment":
-        const applicationFee = 10000; // 10k Naira
+        const applicationFee = getSetting("application_fee_amount", 10000); // Configurable application fee
         const propertyPrice = getPropertyPrice();
         const paymentPlan = PAYMENT_PLAN_OPTIONS.find(
           (p) => p.id === selectedPaymentPlan

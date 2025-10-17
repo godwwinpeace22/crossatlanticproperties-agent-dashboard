@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -92,6 +93,7 @@ interface KYCFormProps {
   onSubmit: (data: KYCFormData, files: FileUploads) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
+  title?: string;
 }
 
 interface FileUploads {
@@ -127,6 +129,7 @@ export function KYCForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
+  title = "Application Form",
 }: KYCFormProps) {
   const { toast } = useToast();
   const [files, setFiles] = useState<FileUploads>({});
@@ -143,6 +146,40 @@ export function KYCForm({
       email_address: "",
     },
   });
+
+  // Prefill info form with user profile
+  const { user } = useAuth();
+  useEffect(() => {
+    const fetchProfileAndPrefill = async () => {
+      if (!user) return;
+      try {
+        const supabase = createClient();
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        if (!error && profile) {
+          form.reset({
+            full_name: profile.full_name || "",
+            email_address: profile.email || "",
+            phone_number: profile.phone || "",
+            address: profile.address || "",
+            // keep other fields as-is
+            // ...form.getValues(),
+          });
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    if (step === "info") {
+      fetchProfileAndPrefill();
+    }
+    // Only run when user or step changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, step]);
 
   // Add authentication check as an additional security layer
   useEffect(() => {
@@ -208,7 +245,7 @@ export function KYCForm({
         </div>
         <h3 className="text-lg font-semibold mb-2">Access Denied</h3>
         <p className="text-gray-600 mb-4">
-          You must be signed in to access the KYC form.
+          You must be signed in to access this form.
         </p>
         <Button onClick={onCancel}>Close</Button>
       </div>
@@ -451,14 +488,14 @@ export function KYCForm({
     return (
       <Card className="flex flex-col max-h-full">
         <CardHeader className="flex-shrink-0">
-          <CardTitle>KYC Information Form</CardTitle>
-          <CardDescription>
-            Please provide accurate information for Know Your Customer
-            verification. All fields marked with * are required.
+          <CardTitle>{title}</CardTitle>
+          <CardDescription className="mb-3">
+            Please provide accurate information for your application. All fields
+            marked with * are required.
           </CardDescription>
           <ProgressIndicator />
         </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto">
+        <CardContent className="flex-1 overflow-y-auto pt-5">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(() => setStep("documents"))}
@@ -700,6 +737,7 @@ export function KYCForm({
                           type="email"
                           placeholder="your.email@example.com"
                           {...field}
+                          readOnly
                         />
                       </FormControl>
                       <FormMessage />
@@ -854,7 +892,7 @@ export function KYCForm({
             }}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Submitting..." : "Submit KYC Application"}
+            {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
         </CardFooter>
       </Card>

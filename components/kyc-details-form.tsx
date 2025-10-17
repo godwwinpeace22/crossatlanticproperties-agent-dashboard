@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,12 @@ import { Check, X, FileText, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatDate, formatCurrency } from "@/lib/format";
 import { KYCSubmission } from "@/lib/types";
+import {
+  getKYCDocuments,
+  getDocumentViewUrl,
+  getLegacyDocumentUrl,
+  KYCDocuments,
+} from "@/lib/kyc-documents";
 
 interface KYCSubmissionWithProfile extends KYCSubmission {
   profiles: {

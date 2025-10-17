@@ -89,7 +89,11 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
           icon: Building2,
           label: "Properties",
         },
-        { href: "/dashboard/admin/agents", icon: Users, label: "Agents" },
+        {
+          href: "/dashboard/admin/users",
+          icon: Users,
+          label: "Users Management",
+        },
         {
           href: "/dashboard/admin/property-interests",
           icon: Heart,
@@ -132,7 +136,31 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
     },
   ];
 
-  const userNavGroups = [
+  const buyerNavGroups = [
+    {
+      label: "Property Investment",
+      icon: Briefcase,
+      items: [
+        { href: "/dashboard", icon: Home, label: "Home" },
+        { href: "/dashboard/kyc", icon: Users, label: "KYC Status" },
+        { href: "/dashboard/documents", icon: FileText, label: "My Documents" },
+      ],
+    },
+    {
+      label: "Account",
+      icon: Wallet,
+      items: [
+        {
+          href: "/dashboard/notifications",
+          icon: Bell,
+          label: "Notifications",
+        },
+        { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+      ],
+    },
+  ];
+
+  const agentNavGroups = [
     // {
     //   label: "Overview",
     //   icon: LayoutDashboard,
@@ -157,6 +185,7 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
       items: [
         { href: "/dashboard/my-interests", icon: Heart, label: "My Interests" },
         { href: "/dashboard/kyc", icon: Users, label: "KYC Status" },
+        { href: "/dashboard/documents", icon: FileText, label: "My Documents" },
       ],
     },
     {
@@ -173,7 +202,7 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
     },
   ];
 
-  const navGroups = isAdmin ? adminNavGroups : userNavGroups;
+  const navGroups = isAdmin ? adminNavGroups : buyerNavGroups;
 
   return (
     <Sidebar collapsible="icon">
@@ -181,7 +210,7 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/dashboard">
+              <Link href="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Building2 className="size-4" />
                 </div>
@@ -239,18 +268,20 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/dashboard">
-                  <Home className="size-4" />
-                  <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+        {profile?.role === "admin" && (
+          <SidebarGroup>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/dashboard">
+                    <Home className="size-4" />
+                    <span>Home</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
         {/* Navigation Groups */}
         {navGroups.map((group) => {
           const firstItem = group.items[0];

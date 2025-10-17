@@ -90,11 +90,14 @@ export default async function PropertyInterestDetailPage({
   // Get installment payments for this interest
   const { data: installmentPayments } = await supabase
     .from("installment_payments")
-    .select("*")
+    .select(
+      `
+    *,
+    user_document:user_documents(*)
+  `
+    )
     .eq("property_interest_id", interest.id)
     .order("installment_number", { ascending: true });
-
-  console.log({ installmentPayments });
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { className: string }> = {

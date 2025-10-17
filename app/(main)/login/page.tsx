@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff, Lock, Mail, Loader2 } from "lucide-react";
@@ -35,6 +35,7 @@ export default function LoginPage() {
     userType: "buyer",
     rememberMe: false,
   });
+  const [redirectParam, setRedirectParam] = useState<string>("");
 
   const router = useRouter();
   const { toast } = useToast();
@@ -78,9 +79,8 @@ export default function LoginPage() {
       // Force a hard redirect to ensure session is properly updated
 
       // check if there is a return-to url
-      const returnTo = new URLSearchParams(window.location.search).get(
-        "redirect"
-      );
+      const returnTo = localStorage.getItem("redirect");
+      localStorage.removeItem("redirect");
 
       window.location.href = returnTo || "/dashboard";
     } catch (error: unknown) {
@@ -325,7 +325,11 @@ export default function LoginPage() {
             <p className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
               <Link
-                href="/register"
+                href={`/register${
+                  redirectParam
+                    ? `?redirect=${encodeURIComponent(redirectParam)}`
+                    : ""
+                }`}
                 className="font-medium text-primary underline-offset-4 hover:underline"
               >
                 Sign up

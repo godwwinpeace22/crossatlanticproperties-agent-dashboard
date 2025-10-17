@@ -22,9 +22,11 @@ import { formatCurrency, formatNumber, formatDate } from "@/lib/format";
 import { KYCStatusCard } from "@/components/kyc-status-card";
 import { MyReferralsCard } from "@/components/my-referrals-card";
 import { FeaturedReferralCard } from "@/components/featured-referral-card";
+import { AgentApprovalWorkflow } from "@/components/agent-approval-workflow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { MyInterests } from "@/components/my-interests";
 
 // Cache dashboard for 2 minutes
 export const revalidate = 120;
@@ -702,6 +704,50 @@ export default async function DashboardPage() {
     );
   }
 
+  const { data: interests } = await supabase
+    .from("property_interests")
+    .select(
+      `
+    *,
+    property:properties(*)
+  `
+    )
+    .eq("user_id", user?.id);
+
+  const interestIds = interests?.map((i) => i.id) || [];
+
+  const { data: installmentPayments } = await supabase
+    .from("installment_payments")
+    .select(
+      `
+      *,
+      property_interest:property_interests(
+        *,
+        property:properties(*)
+      )
+    `
+    )
+    .in("property_interest_id", interestIds)
+    .order("due_date", { ascending: true });
+
+  if (user?.user_metadata?.role == "buyer") {
+    return (
+      <MyInterests
+        payments={installmentPayments || []}
+        interests={interests || []}
+      />
+    );
+  }
+
+  // Check if agent needs approval workflow
+  const isAgent = profile?.role === "agent";
+  const needsApproval = isAgent && !profile?.agent_activated;
+
+  // Show agent approval workflow if needed
+  if (needsApproval) {
+    return <AgentApprovalWorkflow />;
+  }
+
   // Agent stats (existing logic + property interests)
   const [
     { count: totalProperties },
@@ -895,7 +941,9 @@ export default async function DashboardPage() {
                       Pending Payments
                     </span>
                   </div>
-                  <Badge variant="secondary">{pendingPayments || 0}</Badge>
+                  <Badge variant="secondary">
+                    {pendingPayments?.length || 0}
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
@@ -908,98 +956,6 @@ export default async function DashboardPage() {
         referrals={myReferrals || []}
         referralCode={profile?.referral_id || ""}
       />
-
-      {/* Property Interests Summary */}
-      {propertyInterests && propertyInterests.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between gap-2">
-              <span>Recent Properties</span>
-
-              <Link
-                href="/dashboard/my-interests"
-                className="text-blue-500 text-sm"
-              >
-                View All
-              </Link>
-            </CardTitle>
-            <CardDescription>
-              Your latest property investments and interests
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {propertyInterests.slice(0, 3).map((interest: any) => (
-                <div
-                  key={interest.id}
-                  className="flex items-center justify-between p-3 border rounded"
-                >
-                  <div>
-                    <p className="font-medium">
-                      {interest.property?.name ||
-                        `Property #${interest.property_id.slice(-8)}`}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {interest.selected_payment_plan} plan • Status:{" "}
-                      {interest.status}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <Badge
-                      variant={
-                        interest.status === "pending"
-                          ? "secondary"
-                          : interest.status === "approved"
-                          ? "default"
-                          : interest.status === "completed"
-                          ? "default"
-                          : "destructive"
-                      }
-                    >
-                      {interest.status.toUpperCase()}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-              {propertyInterests.length > 3 && (
-                <Button asChild variant="ghost" className="w-full">
-                  <Link href="/dashboard/my-interests">
-                    View All {propertyInterests.length} Interests
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Start Your Property Investment Journey
-            </CardTitle>
-            <CardDescription>
-              Browse available properties and express your interest to start
-              investing
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              As an agent, you can also invest in properties. Complete your KYC
-              verification and express interest in properties to get started
-              with your investment portfolio.
-            </p>
-            <div className="flex gap-2">
-              <Button asChild>
-                <Link href="/(main)/properties">Browse Properties</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/dashboard/kyc">Complete KYC</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* MLM Commission History */}
       {recentCommissions && recentCommissions.length > 0 && (
