@@ -15,6 +15,23 @@ export const formatCurrency = (amount: number) =>
     maximumFractionDigits: 2,
   }).format(amount);
 
+export const formatCompactCurrency = (amount: number) => {
+  if (!Number.isFinite(amount)) return formatCurrency(0);
+
+  const absAmount = Math.abs(amount);
+  if (absAmount >= 1_000_000) {
+    const short = (amount / 1_000_000).toFixed(1).replace(/\.0$/, "");
+    return `₦${short}M`;
+  }
+
+  if (absAmount >= 1_000) {
+    const short = (amount / 1_000).toFixed(1).replace(/\.0$/, "");
+    return `₦${short}K`;
+  }
+
+  return formatCurrency(amount);
+};
+
 /**
  * Formats a number with thousands separators (commas)
  * @param num - The number to format

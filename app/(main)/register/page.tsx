@@ -268,27 +268,26 @@ export default function RegisterPage() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox id="terms" required />
-                <Label
-                  htmlFor="terms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  I agree to the{" "}
-                  <Link
-                    href="/terms"
-                    className="text-primary underline-offset-4 hover:underline"
-                  >
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    href="/privacy"
-                    className="text-primary underline-offset-4 hover:underline"
-                  >
-                    Privacy Policy
-                  </Link>
-                </Label>
+              <div className="flex items-start space-x-2">
+                <input type="checkbox" id="terms" required className="mt-0.5" />
+                <div className="space-y-1">
+                  <Label htmlFor="terms" className="text-sm">
+                    I agree to the{" "}
+                    <Link
+                      href="/terms"
+                      className="text-primary underline-offset-4 hover:underline"
+                    >
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/privacy"
+                      className="text-primary underline-offset-4 hover:underline"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </Label>
+                </div>
               </div>
               <Button
                 className="w-full bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"

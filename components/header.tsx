@@ -174,7 +174,7 @@ export function Header() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right">
+            <SheetContent side="right" className="p-4">
               <div className="flex items-center gap-2 font-semibold mb-8">
                 <Image
                   src="/logo.png"
@@ -183,12 +183,12 @@ export function Header() {
                   height={40}
                   className="h-auto w-[150px]"
                 />
-                <SheetTrigger asChild>
+                {/* <SheetTrigger asChild>
                   <Button variant="outline" size="icon" className="ml-auto">
                     <X className="h-5 w-5" />
                     <span className="sr-only">Close menu</span>
                   </Button>
-                </SheetTrigger>
+                </SheetTrigger> */}
               </div>
               <nav className="flex flex-col gap-4 text-sm font-medium">
                 <Link

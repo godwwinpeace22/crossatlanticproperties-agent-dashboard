@@ -620,7 +620,7 @@ export default function PropertyDetailPage({
                         disabled
                         variant="secondary"
                       >
-                        ✓ Interest Already Submitted
+                        ✓ Application already submitted
                       </Button>
                       <p className="text-xs text-center">
                         Status:{" "}
@@ -640,7 +640,9 @@ export default function PropertyDetailPage({
                       onClick={() => setIsInterestWorkflowOpen(true)}
                       disabled={isCheckingInterest}
                     >
-                      {isCheckingInterest ? "Checking..." : "I'm Interested"}
+                      {isCheckingInterest
+                        ? "Checking..."
+                        : "Apply for this property"}
                     </Button>
                   )}
                   <Button

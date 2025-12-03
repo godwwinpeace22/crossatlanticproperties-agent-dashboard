@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AgentRegisterPage() {
@@ -253,27 +253,26 @@ export default function AgentRegisterPage() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox id="terms" required />
-                <Label
-                  htmlFor="terms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  I agree to the{" "}
-                  <Link
-                    href="/terms"
-                    className="text-primary underline-offset-4 hover:underline"
-                  >
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    href="/privacy"
-                    className="text-primary underline-offset-4 hover:underline"
-                  >
-                    Privacy Policy
-                  </Link>
-                </Label>
+              <div className="flex items-start space-x-2">
+                <input type="checkbox" id="terms" required className="mt-0.5" />
+                <div className="space-y-1">
+                  <Label htmlFor="terms" className="text-sm">
+                    I agree to the{" "}
+                    <Link
+                      href="/terms"
+                      className="text-primary underline-offset-4 hover:underline"
+                    >
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/privacy"
+                      className="text-primary underline-offset-4 hover:underline"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </Label>
+                </div>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h4 className="font-semibold text-blue-900 mb-2">
