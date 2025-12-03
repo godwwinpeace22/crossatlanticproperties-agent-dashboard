@@ -175,21 +175,6 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="p-4">
-              <div className="flex items-center gap-2 font-semibold mb-8">
-                <Image
-                  src="/logo.png"
-                  alt="Crossatlanticproperties Logo"
-                  width={420}
-                  height={40}
-                  className="h-auto w-[150px]"
-                />
-                {/* <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="ml-auto">
-                    <X className="h-5 w-5" />
-                    <span className="sr-only">Close menu</span>
-                  </Button>
-                </SheetTrigger> */}
-              </div>
               <nav className="flex flex-col gap-4 text-sm font-medium">
                 <Link
                   href="/"
@@ -209,30 +194,6 @@ export function Header() {
                 >
                   Property Types
                 </Link>
-
-                {/* Mobile Locations Section */}
-                <div className="border-t pt-4">
-                  <div className="flex items-center gap-2 mb-3 text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span className="font-medium">Locations</span>
-                  </div>
-                  <div className="pl-6 flex flex-col gap-2">
-                    {locations.map((location) => (
-                      <Link
-                        key={location.id}
-                        href={`/properties?location=${location.id}`}
-                        className="transition-colors hover:text-orange-500 text-sm"
-                      >
-                        {location.name}
-                      </Link>
-                    ))}
-                    {locations.length === 0 && isLoading && (
-                      <div className="text-sm text-muted-foreground">
-                        Loading locations...
-                      </div>
-                    )}
-                  </div>
-                </div>
 
                 <Link
                   href="/blog"
@@ -268,21 +229,6 @@ export function Header() {
                     >
                       Dashboard
                     </Link>
-                    <Link
-                      href="/dashboard/settings"
-                      className="transition-colors hover:text-orange-500"
-                    >
-                      Settings
-                    </Link>
-                    <button
-                      onClick={async () => {
-                        await logout();
-                        window.location.href = "/";
-                      }}
-                      className="transition-colors hover:text-orange-500 text-left flex items-center gap-2"
-                    >
-                      <LogOut className="w-4 h-4" /> Logout
-                    </button>
                   </>
                 ) : (
                   <>
