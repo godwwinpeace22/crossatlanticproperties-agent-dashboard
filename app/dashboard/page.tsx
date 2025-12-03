@@ -18,7 +18,7 @@ import {
   CheckCircle,
   PenTool,
 } from "lucide-react";
-import { formatCurrency, formatNumber, formatDate } from "@/lib/format";
+import { formatCompactCurrency, formatNumber, formatDate } from "@/lib/format";
 import { KYCStatusCard } from "@/components/kyc-status-card";
 import { MyReferralsCard } from "@/components/my-referrals-card";
 import { FeaturedReferralCard } from "@/components/featured-referral-card";
@@ -368,7 +368,7 @@ export default async function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-red-600">
-                        {formatCurrency(Number(payment.amount))}
+                        {formatCompactCurrency(Number(payment.amount))}
                       </p>
                       <Badge variant="destructive">
                         {Math.floor(
@@ -568,7 +568,7 @@ export default async function DashboardPage() {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-green-600">
-                          {formatCurrency(agent.total)}
+                          {formatCompactCurrency(agent.total)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Total Earned
@@ -627,7 +627,7 @@ export default async function DashboardPage() {
                     </p>
                     <div className="flex items-center justify-between">
                       <p className="font-bold text-green-600">
-                        {formatCurrency(Number(property.price))}
+                        {formatCompactCurrency(Number(property.price))}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {formatDate(property.created_at)}
@@ -873,7 +873,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(totalEarnings)}
+              {formatCompactCurrency(totalEarnings)}
             </div>
             <p className="text-xs text-muted-foreground">Commission earned</p>
           </CardContent>
@@ -972,7 +972,7 @@ export default async function DashboardPage() {
                     {new Date(commission.created_at).toLocaleDateString()}
                   </span>
                   <span className="font-medium">
-                    {formatCurrency(Number(commission.amount))}
+                    {formatCompactCurrency(Number(commission.amount))}
                   </span>
                 </div>
               ))}

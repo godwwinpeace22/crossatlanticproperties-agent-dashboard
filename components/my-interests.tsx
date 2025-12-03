@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CreditCard, CheckCircle, Clock, AlertTriangle } from "lucide-react";
-import { formatCurrency } from "@/lib/format";
+import { formatCompactCurrency } from "@/lib/format";
 import { PropertyPaymentCard } from "@/components/property-payment-card";
 import Link from "next/link";
 import { PropertyInterest } from "@/lib/types";
@@ -94,7 +94,7 @@ export const MyInterests = ({ payments, interests }: MyInterestsProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(totalPaid)}
+              {formatCompactCurrency(totalPaid)}
             </div>
             <p className="text-xs text-muted-foreground">
               {payments.filter((p) => p.status === "paid").length} payments
@@ -113,7 +113,7 @@ export const MyInterests = ({ payments, interests }: MyInterestsProps) => {
           <CardContent>
             <div className="text-2xl font-bold">{pendingPayments.length}</div>
             <p className="text-xs text-muted-foreground">
-              {formatCurrency(
+              {formatCompactCurrency(
                 pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0)
               )}{" "}
               due
@@ -131,7 +131,7 @@ export const MyInterests = ({ payments, interests }: MyInterestsProps) => {
               {overduePayments.length}
             </div>
             <p className="text-xs text-muted-foreground">
-              {formatCurrency(
+              {formatCompactCurrency(
                 overduePayments.reduce((sum, p) => sum + Number(p.amount), 0)
               )}{" "}
               overdue
@@ -159,7 +159,9 @@ export const MyInterests = ({ payments, interests }: MyInterestsProps) => {
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Price:{" "}
-                        {formatCurrency(Number(interest.property?.price))}
+                        {formatCompactCurrency(
+                          Number(interest.property?.price)
+                        )}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Date of Interest:{" "}

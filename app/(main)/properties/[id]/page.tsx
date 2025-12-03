@@ -36,6 +36,7 @@ import {
 } from "@/hooks/use-property-data";
 import { PropertyShareButton } from "@/components/property-share-button";
 import type { PropertyImage } from "@/lib/types";
+import { formatCompactCurrency } from "@/lib/format";
 
 export default function PropertyDetailPage({
   params,
@@ -89,12 +90,7 @@ export default function PropertyDetailPage({
   const getSquareFeet = () => property?.lotSize;
 
   // Helper functions to format data
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-    }).format(price);
-  };
+  const formatPrice = (price: number) => formatCompactCurrency(price);
 
   const formatSquareFeet = (sqft: number) => {
     return new Intl.NumberFormat("en-US").format(sqft) + " sqm";

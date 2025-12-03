@@ -7,6 +7,7 @@ import { MapPin, Bed, Bath, Maximize, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Property } from "@/lib/types";
+import { formatCompactCurrency } from "@/lib/format";
 
 interface PropertyCardProps {
   property: Property;
@@ -19,10 +20,7 @@ const getCategoryDisplay = (status: string) => {
 };
 
 const formatPrice = (price: number, purpose?: string) => {
-  const formattedPrice = new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-  }).format(price);
+  const formattedPrice = formatCompactCurrency(price);
 
   if (purpose === "rent") {
     return `${formattedPrice}/month`;

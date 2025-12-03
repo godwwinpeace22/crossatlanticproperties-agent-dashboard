@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,19 +27,15 @@ import {
 import {
   Building2,
   MapPin,
-  Home,
   ChevronDown,
   CheckCircle,
   Clock,
-  Upload,
   AlertTriangle,
   Loader2,
   WalletMinimal,
-  IdCardIcon,
 } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCompactCurrency, formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 interface PropertyPaymentCardProps {
   property: any;
@@ -189,7 +187,7 @@ export function PropertyPaymentCard({
               <WalletMinimal className="h-3.5 w-3.5 shrink-0" />
               <span>
                 {paidCount}/{payments.length} installments paid •{" "}
-                {formatCurrency(totalPaid)} paid
+                {formatCompactCurrency(totalPaid)} paid
               </span>
             </div>
           </div>
@@ -251,7 +249,7 @@ export function PropertyPaymentCard({
                       Paid
                     </div>
                     <div className="mt-1 text-sm font-bold text-foreground">
-                      {formatCurrency(totalPaid)}
+                      {formatCompactCurrency(totalPaid)}
                     </div>
                   </div>
                   <div className="rounded-lg border border-border/50 bg-blue-500/5 p-3">
@@ -259,7 +257,7 @@ export function PropertyPaymentCard({
                       Remaining
                     </div>
                     <div className="mt-1 text-sm font-bold text-foreground">
-                      {formatCurrency(totalDue - totalPaid)}
+                      {formatCompactCurrency(totalDue - totalPaid)}
                     </div>
                   </div>
                 </div> */}
@@ -281,7 +279,7 @@ export function PropertyPaymentCard({
                           Installment {payment.installment_number}
                         </div>
                         <div className="text-sm font-bold text-foreground text-right">
-                          {formatCurrency(Number(payment.amount))}
+                          {formatCompactCurrency(Number(payment.amount))}
                         </div>
                       </div>
 

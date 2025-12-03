@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { Property, PropertyType, PropertyImage } from "@/lib/types";
+import { formatCompactCurrency } from "@/lib/format";
 
 export default function PropertyTypePage() {
   const params = useParams();
@@ -79,21 +80,8 @@ export default function PropertyTypePage() {
   };
 
   const formatPrice = (price: number, purpose: string) => {
-    const formattedPrice = new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-
-    // if (purpose === "sale") {
-    //   return formattedPrice;
-    // }
-
-    // if (purpose === "rent") {
-    //   return `${formattedPrice}/month`;
-    // }
-    return formattedPrice;
+    const formattedPrice = formatCompactCurrency(price);
+    return purpose === "rent" ? `${formattedPrice}/month` : formattedPrice;
   };
 
   const formatSize = (size: number | null) => {
