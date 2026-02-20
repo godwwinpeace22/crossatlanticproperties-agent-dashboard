@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
@@ -23,7 +23,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/client";
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("buyer");
   const [isLoading, setIsLoading] = useState(false);
@@ -319,5 +319,13 @@ export default function RegisterPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-muted/30" />}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }

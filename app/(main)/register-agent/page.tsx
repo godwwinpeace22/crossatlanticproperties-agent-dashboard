@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
@@ -21,7 +21,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createClient } from "@/lib/supabase/client";
 
-export default function AgentRegisterPage() {
+function AgentRegisterPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any>({});
@@ -329,5 +329,13 @@ export default function AgentRegisterPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function AgentRegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-muted/30" />}>
+      <AgentRegisterPageContent />
+    </Suspense>
   );
 }
