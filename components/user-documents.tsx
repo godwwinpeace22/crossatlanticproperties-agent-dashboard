@@ -164,7 +164,7 @@ export function UserDocuments({
             full_name,
             email
           )
-        `
+        `,
         )
         .eq("user_id", effectiveUserId)
         .order("created_at", { ascending: false });
@@ -354,7 +354,7 @@ export function UserDocuments({
       doc.document_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.tags?.some((tag) =>
-        tag.toLowerCase().includes(searchTerm.toLowerCase())
+        tag.toLowerCase().includes(searchTerm.toLowerCase()),
       );
 
     return matchesType && matchesSearch;
@@ -387,42 +387,43 @@ export function UserDocuments({
 
   return (
     <div className="space-y-6">
-      {/* ✅ NEW SECTION - Required Documents */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Required Documents
-          </CardTitle>
-          <CardDescription>
-            Please download, complete, and reupload the following documents.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3">
-            {REQUIRED_DOCUMENTS.map((doc) => (
-              <div
-                key={doc.name}
-                className="flex items-center justify-between border rounded-lg p-3 hover:bg-muted/50 transition"
-              >
-                <div>
-                  <div className="font-medium">{doc.name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {doc.description}
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => handleDownloadRequired(doc)}
+      {!isAdminView && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Required Documents
+            </CardTitle>
+            <CardDescription>
+              Please download, complete, and reupload the following documents.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              {REQUIRED_DOCUMENTS.map((doc) => (
+                <div
+                  key={doc.name}
+                  className="flex items-center justify-between border rounded-lg p-3 hover:bg-muted/50 transition"
                 >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                  <div>
+                    <div className="font-medium">{doc.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {doc.description}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownloadRequired(doc)}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ✅ EXISTING DOCUMENT MANAGEMENT SECTION (unchanged) */}
       <Card>

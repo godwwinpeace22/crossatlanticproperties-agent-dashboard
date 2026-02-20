@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { isAdminRole } from "@/lib/roles";
 
 interface DashboardNavProps {
   user: any;
@@ -62,11 +63,13 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
     setOpenSections((prev) =>
       prev.includes(section)
         ? prev.filter((s) => s !== section)
-        : [...prev, section]
+        : [...prev, section],
     );
   };
 
-  const isAdmin = profile.role === "admin";
+  const isAdmin = isAdminRole(profile.role);
+  const isManager = profile.role === "manager";
+  const isAdminOrManager = isAdmin || isManager;
 
   // Define navigation groups with modern structure
   const adminNavGroups = [
@@ -126,6 +129,24 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
           label: "Notifications",
         },
         { href: "/dashboard/settings", icon: UserPlus, label: "Account" },
+      ],
+    },
+  ];
+
+  const managerNavGroups = [
+    adminNavGroups[0],
+    adminNavGroups[1],
+    {
+      id: "account",
+      label: "Account",
+      icon: Wallet,
+      items: [
+        {
+          href: "/dashboard/notifications",
+          icon: Bell,
+          label: "Notifications",
+        },
+        { href: "/dashboard/settings", icon: Settings, label: "Settings" },
       ],
     },
   ];
@@ -207,7 +228,11 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
     },
   ];
 
-  const navGroups = isAdmin ? adminNavGroups : buyerNavGroups;
+  const navGroups = isAdmin
+    ? adminNavGroups
+    : isManager
+      ? managerNavGroups
+      : buyerNavGroups;
 
   const NavGroup = ({ group }: { group: (typeof navGroups)[0] }) => {
     const isOpen = openSections.includes(group.id);
@@ -220,7 +245,7 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
           className={cn(
             "w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
             "hover:bg-accent/80",
-            hasActiveItem && "text-primary bg-accent/50"
+            hasActiveItem && "text-primary bg-accent/50",
           )}
         >
           <div className="flex items-center gap-3">
@@ -230,14 +255,14 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
           <ChevronDown
             className={cn(
               "h-4 w-4 transition-transform duration-200",
-              isOpen && "rotate-180"
+              isOpen && "rotate-180",
             )}
           />
         </button>
         <div
           className={cn(
             "overflow-hidden transition-all duration-300 ease-in-out",
-            isOpen ? "max-h-[500px] opacity-100 mt-1" : "max-h-0 opacity-0"
+            isOpen ? "max-h-[500px] opacity-100 mt-1" : "max-h-0 opacity-0",
           )}
         >
           <div className="space-y-0.5 pl-4">
@@ -252,7 +277,7 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
                     "hover:bg-accent/80 border-l-2 ml-2",
                     isActive
                       ? "bg-primary text-primary-foreground border-primary font-medium shadow-sm"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -287,7 +312,7 @@ export function DashboardNav({ user, profile }: DashboardNavProps) {
               <span
                 className={cn(
                   "inline-block w-2 h-2 rounded-full",
-                  profile.role === "admin" ? "bg-purple-500" : "bg-green-500"
+                  profile.role === "admin" ? "bg-purple-500" : "bg-green-500",
                 )}
               ></span>
               {profile.role}

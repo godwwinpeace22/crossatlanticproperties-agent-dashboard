@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrManager } from "@/lib/roles";
 import { PropertyInterestsTable } from "@/components/property-interests-table";
 
 // Cache for 2 minutes
@@ -21,7 +22,7 @@ export default async function PropertyInterestsPage() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  if (!isAdminOrManager(profile?.role)) {
     redirect("/dashboard");
   }
 
@@ -41,7 +42,7 @@ export default async function PropertyInterestsPage() {
       ),
       property:properties(*),
       interest_payment:interest_payments!property_interests_interest_payment_id_fkey(*)
-    `
+    `,
     )
     .order("created_at", { ascending: false });
 

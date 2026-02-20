@@ -1,4 +1,5 @@
 // Shared type definitions for the application
+import type { UserRole } from "@/lib/roles";
 
 export interface Property {
   id: string;
@@ -80,7 +81,7 @@ export interface Profile {
   full_name: string | null;
   email: string;
   phone: string | null;
-  role: "admin" | "agent";
+  role: UserRole;
   is_active: boolean;
   referral_id?: string | null; // Unique 8-character referral code
   created_at: string;
@@ -230,6 +231,7 @@ export interface KYCSubmission {
   date_of_birth?: string;
   incorporation_date?: string;
   nationality?: string;
+  country_of_residence?: string;
   country_of_incorporation?: string;
   address: string;
   phone_number: string;
@@ -267,6 +269,7 @@ export interface KYCFormData {
   date_of_birth?: string;
   incorporation_date?: string;
   nationality?: string;
+  country_of_residence?: string;
   country_of_incorporation?: string;
   address: string;
   phone_number: string;

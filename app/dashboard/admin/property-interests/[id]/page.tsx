@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrManager } from "@/lib/roles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ export default async function PropertyInterestDetailPage({
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  if (!isAdminOrManager(profile?.role)) {
     redirect("/dashboard");
   }
 
@@ -63,7 +64,7 @@ export default async function PropertyInterestDetailPage({
       ),
       property:properties(*),
       interest_payment:interest_payments!property_interests_interest_payment_id_fkey(*)
-    `
+    `,
     )
     .eq("id", id)
     .single();
@@ -94,7 +95,7 @@ export default async function PropertyInterestDetailPage({
       `
     *,
     user_document:user_documents(*)
-  `
+  `,
     )
     .eq("property_interest_id", interest.id)
     .order("installment_number", { ascending: true });
@@ -188,8 +189,8 @@ export default async function PropertyInterestDetailPage({
                       kycSubmission.status === "approved"
                         ? "bg-green-100 text-green-800"
                         : kycSubmission.status === "rejected"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
                     }
                   >
                     {kycSubmission.status.toUpperCase()}

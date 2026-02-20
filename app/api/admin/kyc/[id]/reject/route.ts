@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrManager } from "@/lib/roles";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const supabase = await createClient();
@@ -18,7 +19,7 @@ export async function POST(
     if (authError || !user) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -28,10 +29,10 @@ export async function POST(
       .eq("id", user.id)
       .single();
 
-    if (profileError || !profile || profile.role !== "admin") {
+    if (profileError || !profile || !isAdminOrManager(profile.role)) {
       return NextResponse.json(
         { error: "Admin privileges required" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -53,7 +54,7 @@ export async function POST(
       console.error("Error rejecting KYC:", updateError);
       return NextResponse.json(
         { error: "Failed to reject KYC" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -76,7 +77,7 @@ export async function POST(
     console.error("Error rejecting KYC:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

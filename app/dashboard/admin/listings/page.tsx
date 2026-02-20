@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import SearchableListings from "./searchable-listings";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrManager } from "@/lib/roles";
 
 // Cache for 3 minutes
 export const revalidate = 180;
@@ -60,7 +61,7 @@ interface ListingsResponse {
 
 async function getListings(
   page: number = 1,
-  pageSize: number = 12
+  pageSize: number = 12,
 ): Promise<ListingsResponse & { totalPages: number; currentPage: number }> {
   const supabase = await createClient();
 
@@ -73,6 +74,16 @@ async function getListings(
 
     if (authError || !user) {
       redirect("/login");
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select()
+      .eq("id", user.id)
+      .single();
+
+    if (!isAdminOrManager(profile?.role)) {
+      redirect("/dashboard");
     }
 
     // Calculate pagination range
@@ -112,7 +123,7 @@ async function getListings(
     const listings: Listing[] = (properties || []).map((property: Property) => {
       // Find images for this property
       const propertyImageList = propertyImages.filter(
-        (img) => img.property_id === property.id
+        (img) => img.property_id === property.id,
       );
 
       // Find the primary image or fallback to first image
@@ -148,13 +159,6 @@ async function getListings(
       pending: listings.filter((l) => l.status === "reserved").length, // Map reserved to pending for UI compatibility
       withdrawn: 0, // Not a valid status in our schema
     };
-
-    // Get user profile information
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, account_type")
-      .eq("id", user.id)
-      .single();
 
     const totalPages = Math.ceil((totalCount || 0) / pageSize);
 

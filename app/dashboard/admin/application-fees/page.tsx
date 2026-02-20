@@ -30,7 +30,11 @@ export default async function InterestPaymentsPage() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin" && profile?.role !== "super_admin") {
+  if (
+    profile?.role !== "admin" &&
+    profile?.role !== "super_admin" &&
+    profile?.role !== "manager"
+  ) {
     redirect("/dashboard");
   }
 
@@ -43,7 +47,7 @@ export default async function InterestPaymentsPage() {
       property:properties(id, name, price, city, state),
       user:profiles!interest_payments_user_id_fkey(id, full_name, email),
       property_interest:property_interests!interest_payments_property_interest_id_fkey(id, status, selected_payment_plan)
-    `
+    `,
     )
     .order("created_at", { ascending: false });
 

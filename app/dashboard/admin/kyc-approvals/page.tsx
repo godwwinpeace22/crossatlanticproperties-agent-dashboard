@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrManager } from "@/lib/roles";
 import { KYCApprovalsList } from "@/components/kyc-approvals-list";
 
 // Cache for 1 minute (approvals need to be relatively fresh)
@@ -21,7 +22,7 @@ export default async function KYCApprovalsPage() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  if (!isAdminOrManager(profile?.role)) {
     redirect("/dashboard");
   }
 
@@ -39,7 +40,7 @@ export default async function KYCApprovalsPage() {
         full_name,
         email
       )
-    `
+    `,
     )
     .order("created_at", { ascending: false });
 

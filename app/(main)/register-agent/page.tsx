@@ -28,6 +28,14 @@ export default function AgentRegisterPage() {
   const [message, setMessage] = useState("");
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const redirectParam = searchParams.get("redirect");
+    if (redirectParam) {
+      setRedirectUrl(redirectParam);
+    }
+  }, [searchParams]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -56,10 +64,13 @@ export default function AgentRegisterPage() {
     }
 
     try {
+      const finalRedirect = redirectUrl || "/dashboard";
+
       const { data: signUpData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(finalRedirect)}`,
           data: {
             full_name: `${data.firstName} ${data.lastName}`,
             role: "agent",
@@ -69,16 +80,13 @@ export default function AgentRegisterPage() {
 
       if (error) throw error;
 
-      if (signUpData.user && !signUpData.user.email_confirmed_at) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
-        });
-        if (signInError) throw signInError;
+      if (!signUpData.user) {
+        throw new Error("Unable to create account. Please try again.");
       }
 
-      // Redirect to dashboard where agent workflow will be shown
-      router.push("/dashboard");
+      router.push(
+        `/auth/signup-success?email=${encodeURIComponent(data.email)}&next=${encodeURIComponent(finalRedirect)}&role=agent`,
+      );
     } catch (error: unknown) {
       setErrors({
         general: error instanceof Error ? error.message : "An error occurred",
@@ -114,7 +122,7 @@ export default function AgentRegisterPage() {
             </div>
           </div>
         </div>
-        <Card className="mx-auto max-w-md">
+        <Card className="mx-auto max-w-md border-0 sm:border shadow-none md:shadow order-1 md:order-2">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <Image

@@ -115,14 +115,14 @@ export function PropertyInterestWorkflow({
   // State management
   const [currentStep, setCurrentStep] = useState<WorkflowStep>("auth_check");
   const [kycSubmission, setKYCSubmission] = useState<KYCSubmission | null>(
-    null
+    null,
   );
   const [selectedPaymentPlan, setSelectedPaymentPlan] =
     useState<PaymentPlan | null>(null);
   const [paymentTimeframe, setPaymentTimeframe] = useState<number>(12); // months
   const [referralCode, setReferralCode] = useState("");
   const [referralCodeValid, setReferralCodeValid] = useState<boolean | null>(
-    null
+    null,
   );
   const [referringAgentName, setReferringAgentName] = useState<string>("");
   const [isValidatingCode, setIsValidatingCode] = useState(false);
@@ -205,7 +205,7 @@ export function PropertyInterestWorkflow({
       // Determine next step based on KYC status and system settings
       const requireKYCApproval = getSetting(
         "kyc_approval_required_for_payment",
-        false
+        false,
       );
 
       if (!latestKYC) {
@@ -286,6 +286,7 @@ export function PropertyInterestWorkflow({
           date_of_birth: formData.date_of_birth,
           incorporation_date: formData.incorporation_date,
           nationality: formData.nationality,
+          country_of_residence: formData.country_of_residence,
           country_of_incorporation: formData.country_of_incorporation,
           address: formData.address,
           phone_number: formData.phone_number,
@@ -663,7 +664,7 @@ export function PropertyInterestWorkflow({
 
         const requireKYCApproval = getSetting(
           "kyc_approval_required_for_payment",
-          false
+          false,
         );
 
         if (!kycSubmission) {
@@ -821,8 +822,8 @@ export function PropertyInterestWorkflow({
                     referralCodeValid === true
                       ? "border-green-500"
                       : referralCodeValid === false
-                      ? "border-red-500"
-                      : ""
+                        ? "border-red-500"
+                        : ""
                   }
                 />
                 {isValidatingCode && (
@@ -905,7 +906,7 @@ export function PropertyInterestWorkflow({
 
         const kycApprovalRequired = getSetting(
           "kyc_approval_required_for_payment",
-          false
+          false,
         );
 
         if (
@@ -941,7 +942,7 @@ export function PropertyInterestWorkflow({
 
         const totalPrice = getPropertyPrice();
         const selectedPlan = PAYMENT_PLAN_OPTIONS.find(
-          (p) => p.id === selectedPaymentPlan
+          (p) => p.id === selectedPaymentPlan,
         );
 
         return (
@@ -1062,7 +1063,7 @@ export function PropertyInterestWorkflow({
         const applicationFee = getSetting("application_fee_amount", 10000); // Configurable application fee
         const propertyPrice = getPropertyPrice();
         const paymentPlan = PAYMENT_PLAN_OPTIONS.find(
-          (p) => p.id === selectedPaymentPlan
+          (p) => p.id === selectedPaymentPlan,
         );
 
         return (

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrManager } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -39,7 +40,7 @@ export default async function PropertiesPage() {
     .order("created_at", { ascending: false })
     .range(0, pageSize - 1);
 
-  const isAdmin = profile?.role === "admin";
+  const isAdmin = isAdminOrManager(profile?.role);
   const hasMore = (totalCount || 0) > pageSize;
 
   return (

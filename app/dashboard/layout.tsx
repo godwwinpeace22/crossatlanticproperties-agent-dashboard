@@ -22,7 +22,7 @@ export default async function DashboardLayout({
 
   const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) {
-    redirect("/auth/login");
+    redirect("/login");
   }
 
   // Get user profile to check role
@@ -33,7 +33,7 @@ export default async function DashboardLayout({
     .single();
 
   if (!profile) {
-    redirect("/auth/login");
+    redirect("/login");
   }
 
   return (

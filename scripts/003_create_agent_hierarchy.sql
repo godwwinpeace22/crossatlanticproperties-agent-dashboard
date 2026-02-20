@@ -25,7 +25,7 @@ create policy "Agents can view their own hierarchy"
     upline_id = auth.uid() or
     exists (
       select 1 from public.profiles
-      where id = auth.uid() and role = 'admin'
+      where id = auth.uid() and role in ('super_admin', 'admin', 'manager')
     )
   );
 
@@ -34,7 +34,7 @@ create policy "Only admins can manage hierarchy"
   using (
     exists (
       select 1 from public.profiles
-      where id = auth.uid() and role = 'admin'
+      where id = auth.uid() and role in ('super_admin', 'admin', 'manager')
     )
   );
 
@@ -43,6 +43,6 @@ create policy "Only admins can update hierarchy"
   using (
     exists (
       select 1 from public.profiles
-      where id = auth.uid() and role = 'admin'
+      where id = auth.uid() and role in ('super_admin', 'admin', 'manager')
     )
   );

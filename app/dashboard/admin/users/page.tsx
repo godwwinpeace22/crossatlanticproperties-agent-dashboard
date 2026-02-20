@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole } from "@/lib/roles";
 import { redirect } from "next/navigation";
 import {
   Card,
@@ -28,7 +29,7 @@ export default async function UsersManagementPage() {
     .eq("id", user.id)
     .single();
 
-  if (profileError || profile?.role !== "admin") {
+  if (profileError || !isAdminRole(profile?.role)) {
     redirect("/dashboard");
   }
 
@@ -43,8 +44,9 @@ export default async function UsersManagementPage() {
       role,
       status,
       created_at,
-      phone
-    `
+      phone,
+      agent_activated
+    `,
     )
     .order("created_at", { ascending: false });
 
@@ -54,11 +56,14 @@ export default async function UsersManagementPage() {
 
   // Get user statistics
   const userStats =
-    users?.reduce((acc, user) => {
-      acc[user.role] = (acc[user.role] || 0) + 1;
-      acc.total = (acc.total || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>) || {};
+    users?.reduce(
+      (acc, user) => {
+        acc[user.role] = (acc[user.role] || 0) + 1;
+        acc.total = (acc.total || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    ) || {};
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
@@ -73,7 +78,7 @@ export default async function UsersManagementPage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -112,6 +117,17 @@ export default async function UsersManagementPage() {
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
               {userStats.staff || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Managers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-indigo-600">
+              {userStats.manager || 0}
             </div>
           </CardContent>
         </Card>

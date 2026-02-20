@@ -29,7 +29,7 @@ CREATE POLICY "Admins can view all terms acceptances"
   USING (
     EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role = 'admin'
+      WHERE id = auth.uid() AND role in ('super_admin', 'admin', 'manager')
     )
   );
 

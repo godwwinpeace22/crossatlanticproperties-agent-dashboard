@@ -54,7 +54,7 @@ export function AgentApprovalWorkflow() {
   const [currentStep, setCurrentStep] =
     useState<AgentApprovalStep>("verification");
   const [kycSubmission, setKYCSubmission] = useState<KYCSubmission | null>(
-    null
+    null,
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmittingKYC, setIsSubmittingKYC] = useState(false);
@@ -188,6 +188,7 @@ export function AgentApprovalWorkflow() {
           date_of_birth: formData.date_of_birth,
           incorporation_date: formData.incorporation_date,
           nationality: formData.nationality,
+          country_of_residence: formData.country_of_residence,
           country_of_incorporation: formData.country_of_incorporation,
           address: formData.address,
           phone_number: formData.phone_number,
@@ -558,8 +559,8 @@ export function AgentApprovalWorkflow() {
                     status === "completed"
                       ? "bg-green-100 border-green-500 text-green-600"
                       : status === "current"
-                      ? "bg-blue-100 border-blue-500 text-blue-600"
-                      : "bg-gray-100 border-gray-300 text-gray-400"
+                        ? "bg-blue-100 border-blue-500 text-blue-600"
+                        : "bg-gray-100 border-gray-300 text-gray-400"
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -570,8 +571,8 @@ export function AgentApprovalWorkflow() {
                       status === "completed"
                         ? "text-green-600"
                         : status === "current"
-                        ? "text-blue-600"
-                        : "text-gray-400"
+                          ? "text-blue-600"
+                          : "text-gray-400"
                     }`}
                   >
                     {step.label}
@@ -581,10 +582,10 @@ export function AgentApprovalWorkflow() {
                   <div
                     className={`flex-1 h-0.5 mx-4 ${
                       getStepStatus(
-                        steps[index + 1].id as AgentApprovalStep
+                        steps[index + 1].id as AgentApprovalStep,
                       ) === "completed" ||
                       getStepStatus(
-                        steps[index + 1].id as AgentApprovalStep
+                        steps[index + 1].id as AgentApprovalStep,
                       ) === "current"
                         ? "bg-blue-500"
                         : "bg-gray-300"

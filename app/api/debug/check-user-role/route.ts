@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole } from "@/lib/roles";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
       },
       profile: profile || null,
       profileError: profileError?.message || null,
-      isAdmin: profile?.role === "admin",
+      isAdmin: isAdminRole(profile?.role),
     });
   } catch (error) {
     console.error("Error checking user role:", error);

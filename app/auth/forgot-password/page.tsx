@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,75 +56,83 @@ export default function ForgotPasswordPage() {
 
   if (emailSent) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="rounded-full bg-blue-100 p-3">
-                <Mail className="h-6 w-6 text-blue-600" />
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center px-4 py-10">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="rounded-full bg-blue-100 p-3">
+                  <Mail className="h-6 w-6 text-blue-600" />
+                </div>
               </div>
-            </div>
-            <CardTitle>Check Your Email</CardTitle>
-            <CardDescription>
-              We've sent a password reset link to <strong>{email}</strong>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Click the link in the email to reset your password. If you don't
-              see the email, check your spam folder.
-            </p>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/login">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Login
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+              <CardTitle>Check Your Email</CardTitle>
+              <CardDescription>
+                We've sent a password reset link to <strong>{email}</strong>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Click the link in the email to reset your password. If you don't
+                see the email, check your spam folder.
+              </p>
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/login">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Login
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Forgot Password</CardTitle>
-          <CardDescription>
-            Enter your email address and we'll send you a link to reset your
-            password
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                disabled={loading}
-              />
-            </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Header />
+      <main className="flex-1 flex items-center justify-center px-4 py-10">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Forgot Password</CardTitle>
+            <CardDescription>
+              Enter your email address and we'll send you a link to reset your
+              password
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  disabled={loading}
+                />
+              </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send Reset Link
-            </Button>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send Reset Link
+              </Button>
 
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/login">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Login
-              </Link>
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/login">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Login
+                </Link>
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </main>
+      <Footer />
     </div>
   );
 }

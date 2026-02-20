@@ -37,7 +37,7 @@ import {
 interface CreateAccountFormData {
   email: string;
   fullName: string;
-  role: "agent" | "buyer" | "staff" | "admin";
+  role: "agent" | "buyer" | "staff" | "manager" | "admin";
   sendEmail: boolean;
   welcomeMessage?: string;
 }
@@ -63,6 +63,7 @@ export function CreateAccountModal({ trigger }: CreateAccountModalProps) {
 
   const roleIcons = {
     admin: Shield,
+    manager: Shield,
     agent: User,
     buyer: Briefcase,
     staff: UserPlus,
@@ -70,6 +71,7 @@ export function CreateAccountModal({ trigger }: CreateAccountModalProps) {
 
   const roleDescriptions = {
     admin: "Full system access with all administrative privileges",
+    manager: "Operational access without super admin privileges",
     agent:
       "Property sales agent with commission tracking and referral management",
     buyer: "Property buyer with interest submission and payment capabilities",

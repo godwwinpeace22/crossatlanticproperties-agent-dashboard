@@ -22,6 +22,7 @@ import {
 import { Eye, Search } from "lucide-react";
 import Link from "next/link";
 import { CreateAccountModal } from "@/components/create-account-modal";
+import { useToast } from "@/hooks/use-toast";
 
 interface User {
   id: string;
@@ -40,6 +41,11 @@ interface UsersTableProps {
 export function UsersTable({ users }: UsersTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [rolesByUserId, setRolesByUserId] = useState<Record<string, string>>(
+    {},
+  );
+  const { toast } = useToast();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -51,8 +57,12 @@ export function UsersTable({ users }: UsersTableProps) {
 
   const getRoleColor = (role: string) => {
     switch (role) {
+      case "super_admin":
+        return "bg-purple-200 text-purple-900 border-purple-300";
       case "admin":
         return "bg-purple-100 text-purple-800 border-purple-200";
+      case "manager":
+        return "bg-indigo-100 text-indigo-800 border-indigo-200";
       case "agent":
         return "bg-blue-100 text-blue-800 border-blue-200";
       case "buyer":
@@ -91,6 +101,41 @@ export function UsersTable({ users }: UsersTableProps) {
     });
   }, [users, searchTerm, roleFilter]);
 
+  const handleRoleChange = async (userId: string, nextRole: string) => {
+    const currentRole =
+      rolesByUserId[userId] || users.find((user) => user.id === userId)?.role;
+
+    if (!currentRole || currentRole === nextRole) return;
+
+    setUpdatingUserId(userId);
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/role`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: nextRole }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to update user role");
+      }
+
+      setRolesByUserId((prev) => ({ ...prev, [userId]: nextRole }));
+      toast({
+        title: "Role Updated",
+        description: "User role has been updated successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Update Failed",
+        description: error?.message || "Unable to update user role.",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Filters and Actions */}
@@ -114,6 +159,7 @@ export function UsersTable({ users }: UsersTableProps) {
               <SelectItem value="agent">Agents</SelectItem>
               <SelectItem value="buyer">Buyers</SelectItem>
               <SelectItem value="staff">Staff</SelectItem>
+              <SelectItem value="manager">Managers</SelectItem>
               <SelectItem value="admin">Admins</SelectItem>
             </SelectContent>
           </Select>
@@ -152,13 +198,51 @@ export function UsersTable({ users }: UsersTableProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getRoleColor(user.role)}>
-                      {user.role}
-                    </Badge>
+                    <Select
+                      value={rolesByUserId[user.id] || user.role}
+                      onValueChange={(value) =>
+                        handleRoleChange(user.id, value)
+                      }
+                      disabled={
+                        updatingUserId === user.id ||
+                        user.role === "super_admin"
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-[160px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="super_admin" disabled>
+                          Super Admin
+                        </SelectItem>
+                        <SelectItem value="buyer">Buyer</SelectItem>
+                        <SelectItem value="agent">Agent</SelectItem>
+                        <SelectItem value="staff">Staff</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="mt-2">
+                      <Badge
+                        className={getRoleColor(
+                          rolesByUserId[user.id] || user.role,
+                        )}
+                      >
+                        {rolesByUserId[user.id] || user.role}
+                      </Badge>
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(user.status)}>
-                      {user.status}
+                    <Badge
+                      className={
+                        (user as any).agent_activated
+                          ? "text-green-900 bg-green-50"
+                          : "text-orange-500 bg-orange-50"
+                      }
+                    >
+                      {(user as any).agent_activated
+                        ? "Activated"
+                        : "Not activated"}
                     </Badge>
                   </TableCell>
                   <TableCell>

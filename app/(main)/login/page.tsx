@@ -87,11 +87,11 @@ export default function LoginPage() {
       if (error instanceof Error) {
         if (error.message.includes("Invalid login credentials")) {
           setError(
-            "Invalid email or password. Please check your credentials and try again."
+            "Invalid email or password. Please check your credentials and try again.",
           );
         } else if (error.message.includes("Email not confirmed")) {
           setError(
-            "Please check your email and confirm your account before signing in."
+            "Please check your email and confirm your account before signing in.",
           );
         } else {
           setError(error.message);
@@ -126,8 +126,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 py-12">
-      <div className="container grid flex-1 items-center justify-center gap-12 px-4 md:grid-cols-2 md:gap-16 lg:max-w-6xl lg:gap-20">
+    <div className="flex min-h-screen items-start justify-center bg-muted/30 py-4 sm:py-8 md:items-center md:py-12">
+      <div className="container px-3 sm:px-0 sm:grid flex-1 items-center justify-center gap-6 sm:px-4 md:grid-cols-2 md:gap-16 lg:max-w-6xl lg:gap-20">
         <div className="hidden flex-col space-y-4 md:flex">
           <div className="space-y-2 text-center md:text-left">
             <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -148,8 +148,8 @@ export default function LoginPage() {
             />
           </div>
         </div>
-        <Card className="mx-auto max-w-md">
-          <CardHeader className="space-y-1 text-center">
+        <Card className="mx-auto w-full lg:max-w-md py-4 sm:py-6 shadow-none sm:shadow border-0 sm:border">
+          <CardHeader className="space-y-1 px-4 text-center sm:px-6">
             <div className="flex justify-center mb-4">
               <Image
                 src="/logo.png"
@@ -164,7 +164,7 @@ export default function LoginPage() {
               Enter your email and password to access your account
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-4 sm:px-6">
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -192,7 +192,7 @@ export default function LoginPage() {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
                   <Link
-                    href="/forgot-password"
+                    href="/auth/forgot-password"
                     className="text-sm font-medium text-primary underline-offset-4 hover:underline"
                   >
                     Forgot password?
@@ -321,7 +321,7 @@ export default function LoginPage() {
               </Button>
             </div> */}
           </CardContent>
-          <CardFooter className="flex flex-col items-center">
+          <CardFooter className="flex flex-col items-center px-4 sm:px-6">
             <p className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
               <Link

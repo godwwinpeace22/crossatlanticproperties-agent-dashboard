@@ -4,6 +4,7 @@ import {
   batchSendNotificationEmails,
 } from "@/lib/email-notifications";
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRole } from "@/lib/roles";
 
 /**
  * API Route: Process Email Queue
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
 
       // Merge notifications with emails
       const notificationMap = new Map(
-        notifications?.map((n) => [n.id, n]) || []
+        notifications?.map((n) => [n.id, n]) || [],
       );
 
       var queuedEmails = filteredEmails
@@ -167,7 +168,7 @@ export async function GET(request: NextRequest) {
 
             console.error(`Failed to send email ${email.id}:`, error);
           }
-        })
+        }),
       );
     }
 
@@ -184,7 +185,7 @@ export async function GET(request: NextRequest) {
         error: "Internal server error",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -215,10 +216,10 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (profile?.role !== "admin") {
+    if (!isAdminRole(profile?.role)) {
       return NextResponse.json(
         { error: "Forbidden: Admin access required" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -228,7 +229,7 @@ export async function POST(request: NextRequest) {
     console.error("Error in POST process-queue:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

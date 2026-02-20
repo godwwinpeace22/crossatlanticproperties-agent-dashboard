@@ -1,5 +1,6 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminRole } from "@/lib/roles";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
     if (!email || !fullName || !role || !temporaryPassword) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -43,23 +44,23 @@ export async function POST(request: NextRequest) {
 
     if (profileError) {
       return NextResponse.json(
-        { 
-          error: "Failed to verify user role", 
+        {
+          error: "Failed to verify user role",
           details: profileError.message,
-          userId: user.id 
+          userId: user.id,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    if (!profile || profile.role !== "admin") {
+    if (!profile || !isAdminRole(profile.role)) {
       return NextResponse.json(
-        { 
-          error: "Admin privileges required", 
+        {
+          error: "Admin privileges required",
           currentRole: profile?.role || "no profile found",
-          userId: user.id 
+          userId: user.id,
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -92,16 +93,19 @@ export async function POST(request: NextRequest) {
         code: createUserError.code,
       });
       return NextResponse.json(
-        { 
+        {
           error: "Database error creating new user",
           details: createUserError.message,
           code: createUserError.code,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    console.log("User created successfully, creating profile for:", authUser.user.id);
+    console.log(
+      "User created successfully, creating profile for:",
+      authUser.user.id,
+    );
 
     // Create or update profile
     const { error: profileInsertError } = await adminSupabase
@@ -129,12 +133,12 @@ export async function POST(request: NextRequest) {
       if (updateError) {
         console.error("Error updating profile:", updateError);
         return NextResponse.json(
-          { 
+          {
             error: "Failed to create user profile",
             insertError: profileInsertError.message,
             updateError: updateError.message,
           },
-          { status: 500 }
+          { status: 500 },
         );
       } else {
         console.log("Profile updated successfully after insert failed");
@@ -156,7 +160,7 @@ export async function POST(request: NextRequest) {
     console.error("Error in create-user API:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

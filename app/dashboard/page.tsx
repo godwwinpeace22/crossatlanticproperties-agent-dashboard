@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrManager } from "@/lib/roles";
 import {
   Card,
   CardContent,
@@ -46,7 +47,7 @@ export default async function DashboardPage() {
     .eq("id", user.id)
     .single();
 
-  const isAdmin = profile?.role === "admin";
+  const isAdmin = isAdminOrManager(profile?.role);
 
   // Get dashboard stats based on role
   if (isAdmin) {
@@ -95,7 +96,7 @@ export default async function DashboardPage() {
           `
           *,
           profiles!inner(full_name, email)
-        `
+        `,
         )
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -108,7 +109,7 @@ export default async function DashboardPage() {
           *,
           profiles!inner(full_name, email),
           property:properties!inner(name, price)
-        `
+        `,
         )
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -124,7 +125,7 @@ export default async function DashboardPage() {
             profiles!inner(full_name, email),
             property:properties!inner(name)
           )
-        `
+        `,
         )
         .eq("status", "pending")
         .lt("due_date", new Date().toISOString())
@@ -145,7 +146,7 @@ export default async function DashboardPage() {
           agent_id,
           amount,
           profiles!inner(id, full_name, email)
-        `
+        `,
         )
         .order("amount", { ascending: false })
         .limit(100),
@@ -374,7 +375,7 @@ export default async function DashboardPage() {
                         {Math.floor(
                           (new Date().getTime() -
                             new Date(payment.due_date).getTime()) /
-                            (1000 * 60 * 60 * 24)
+                            (1000 * 60 * 60 * 24),
                         )}{" "}
                         days overdue
                       </Badge>
@@ -710,7 +711,7 @@ export default async function DashboardPage() {
       `
     *,
     property:properties(*)
-  `
+  `,
     )
     .eq("user_id", user?.id);
 
@@ -725,7 +726,7 @@ export default async function DashboardPage() {
         *,
         property:properties(*)
       )
-    `
+    `,
     )
     .in("property_interest_id", interestIds)
     .order("due_date", { ascending: true });
@@ -782,7 +783,7 @@ export default async function DashboardPage() {
         `
         *,
         property:properties(name, price)
-      `
+      `,
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
@@ -801,7 +802,7 @@ export default async function DashboardPage() {
         *,
         property_interest:property_interests!inner(user_id)
       `,
-        { count: "exact" }
+        { count: "exact" },
       )
       .eq("property_interest.user_id", user.id)
       .eq("status", "pending"),
@@ -819,7 +820,7 @@ export default async function DashboardPage() {
         *,
         profiles:profiles!property_interests_user_id_fkey(full_name, email),
         property:properties(name, price, city)
-      `
+      `,
       )
       .eq("referring_agent_id", user.id)
       .order("created_at", { ascending: false }),
@@ -828,7 +829,7 @@ export default async function DashboardPage() {
   const totalEarnings =
     recentCommissions?.reduce(
       (sum, commission) => sum + Number(commission.amount),
-      0
+      0,
     ) || 0;
 
   return (

@@ -47,6 +47,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { createClient } from "@/lib/supabase/client";
+import { isAdminRole } from "@/lib/roles";
 import { useRouter } from "next/navigation";
 
 interface AppSidebarProps {
@@ -71,7 +72,9 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
     router.push("/");
   };
 
-  const isAdmin = profile.role === "admin";
+  const isAdmin = isAdminRole(profile.role);
+  const isManager = profile.role === "manager";
+  const isAdminOrManager = isAdmin || isManager;
 
   // Define navigation groups
   const adminNavGroups = [
@@ -136,6 +139,28 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
     },
   ];
 
+  const managerNavGroups = [
+    {
+      label: "Administration",
+      icon: Shield,
+      items: adminNavGroups[0].items.filter(
+        (item) => item.href !== "/dashboard/admin/users",
+      ),
+    },
+    {
+      label: "Account",
+      icon: Wallet,
+      items: [
+        {
+          href: "/dashboard/notifications",
+          icon: Bell,
+          label: "Notifications",
+        },
+        { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+      ],
+    },
+  ];
+
   const buyerNavGroups = [
     {
       label: "Property Investment",
@@ -144,8 +169,27 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
         { href: "/dashboard", icon: Home, label: "Home" },
         { href: "/dashboard/kyc", icon: Users, label: "KYC Status" },
         { href: "/dashboard/documents", icon: FileText, label: "My Documents" },
+        {
+          href: "/dashboard/my-interests",
+          icon: Building2,
+          label: "Interests & Investments",
+        },
       ],
     },
+    {
+      label: "MLM & Earnings",
+      icon: Network,
+      items: [
+        { href: "/dashboard/network", icon: Network, label: "My Network" },
+        { href: "/dashboard/referrals", icon: UserPlus, label: "Referrals" },
+        {
+          href: "/dashboard/commissions",
+          icon: DollarSign,
+          label: "Commissions",
+        },
+      ],
+    },
+
     {
       label: "Account",
       icon: Wallet,
@@ -202,7 +246,11 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
     },
   ];
 
-  const navGroups = isAdmin ? adminNavGroups : buyerNavGroups;
+  const navGroups = isAdmin
+    ? adminNavGroups
+    : isManager
+      ? managerNavGroups
+      : buyerNavGroups;
 
   return (
     <Sidebar collapsible="icon">
@@ -232,7 +280,7 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
             <div
               className={cn(
                 "rounded-lg border bg-accent/30 transition-all",
-                state === "collapsed" ? "p-2" : "p-3"
+                state === "collapsed" ? "p-2" : "p-3",
               )}
             >
               {state === "expanded" ? (
@@ -246,7 +294,7 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
                         "inline-block w-2 h-2 rounded-full",
                         profile.role === "admin"
                           ? "bg-purple-500"
-                          : "bg-green-500"
+                          : "bg-green-500",
                       )}
                     ></span>
                     {profile.role}
@@ -259,7 +307,7 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
                       "inline-block w-2 h-2 rounded-full",
                       profile.role === "admin"
                         ? "bg-purple-500"
-                        : "bg-green-500"
+                        : "bg-green-500",
                     )}
                   ></span>
                 </div>

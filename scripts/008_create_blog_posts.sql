@@ -54,7 +54,7 @@ CREATE POLICY "Only admins can manage blog posts" ON blog_posts
     EXISTS (
       SELECT 1 FROM profiles 
       WHERE profiles.id = auth.uid() 
-      AND profiles.role = 'admin'
+      AND profiles.role in ('super_admin', 'admin', 'manager')
     )
   );
 
@@ -74,7 +74,7 @@ CREATE POLICY "Only admins can upload blog images" ON storage.objects
     EXISTS (
       SELECT 1 FROM profiles 
       WHERE profiles.id = auth.uid() 
-      AND profiles.role = 'admin'
+      AND profiles.role in ('super_admin', 'admin', 'manager')
     )
   );
 
@@ -85,7 +85,7 @@ CREATE POLICY "Only admins can delete blog images" ON storage.objects
     EXISTS (
       SELECT 1 FROM profiles 
       WHERE profiles.id = auth.uid() 
-      AND profiles.role = 'admin'
+      AND profiles.role in ('super_admin', 'admin', 'manager')
     )
   );
 

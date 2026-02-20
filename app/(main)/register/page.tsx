@@ -31,6 +31,14 @@ export default function RegisterPage() {
   const [message, setMessage] = useState("");
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const redirectParam = searchParams.get("redirect");
+    if (redirectParam) {
+      setRedirectUrl(redirectParam);
+    }
+  }, [searchParams]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -64,10 +72,13 @@ export default function RegisterPage() {
     }
 
     try {
+      const finalRedirect = redirectUrl || "/dashboard";
+
       const { data: signUpData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(finalRedirect)}`,
           data: {
             full_name: `${data.firstName} ${data.lastName}`,
             role: "buyer",
@@ -77,17 +88,13 @@ export default function RegisterPage() {
 
       if (error) throw error;
 
-      if (signUpData.user && !signUpData.user.email_confirmed_at) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
-        });
-        if (signInError) throw signInError;
+      if (!signUpData.user) {
+        throw new Error("Unable to create account. Please try again.");
       }
 
-      // Redirect to registration flow instead of dashboard
-      const finalRedirect = redirectUrl || "/dashboard";
-      router.push(finalRedirect);
+      router.push(
+        `/auth/signup-success?email=${encodeURIComponent(data.email)}&next=${encodeURIComponent(finalRedirect)}&role=buyer`,
+      );
     } catch (error: unknown) {
       // setErrors({
       //   general: error instanceof Error ? error.message : "An error occurred",
@@ -113,26 +120,21 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 py-12">
       <div className="container grid flex-1 items-center justify-center gap-12 px-4 md:grid-cols-2 md:gap-16 lg:max-w-6xl lg:gap-20">
-        <div className="hidden flex-col space-y-4 md:flex">
+        <div className="flex flex-col space-y-6 order-2 md:order-1 px-5">
           <div className="space-y-2 text-center md:text-left">
-            <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-              Join Our Community
+            <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-2xl">
+              Become an Agent
             </h1>
             <p className="text-muted-foreground md:text-xl">
-              Create an account to start your real estate journey
+              Build your referral network and earn commissions by joining as an
+              agent.
             </p>
           </div>
-          <div className="relative aspect-video overflow-hidden rounded-xl">
-            <Image
-              src="/about1.jpg?height=800&width=1200"
-              width={1200}
-              height={800}
-              alt="Register"
-              className="object-cover"
-            />
-          </div>
+          <Button className="w-full" size="lg" asChild>
+            <Link href="/register-agent">Register as Agent</Link>
+          </Button>
         </div>
-        <Card className="mx-auto max-w-md">
+        <Card className="mx-auto w-full border-0 sm:border max-w-md shadow-none md:shadow order-1 md:order-2">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <Image
@@ -311,15 +313,6 @@ export default function RegisterPage() {
                 className="font-medium text-primary underline-offset-4 hover:underline"
               >
                 Sign in
-              </Link>
-            </p>
-            <p className="text-center text-sm text-muted-foreground mt-2">
-              Want to become an agent?{" "}
-              <Link
-                href="/register-agent"
-                className="font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Agent Registration
               </Link>
             </p>
           </CardFooter>

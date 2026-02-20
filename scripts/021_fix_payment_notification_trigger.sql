@@ -43,7 +43,7 @@ BEGIN
 
     -- Notify all admins
     FOR v_admin_id IN 
-      SELECT id FROM public.profiles WHERE role = 'admin'
+      SELECT id FROM public.profiles WHERE role in ('super_admin', 'admin', 'manager')
     LOOP
       PERFORM create_notification(
         v_admin_id,

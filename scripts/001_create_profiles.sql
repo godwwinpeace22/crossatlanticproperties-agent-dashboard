@@ -3,7 +3,7 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   full_name text,
-  role text not null default 'agent' check (role in ('admin', 'agent')),
+  role text not null default 'agent' check (role in ('super_admin', 'admin', 'manager', 'agent', 'buyer', 'staff')),
   status text not null default 'active' check (status in ('active', 'inactive', 'suspended')),
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -26,7 +26,7 @@ create policy "Admins can view all profiles"
   using (
     exists (
       select 1 from public.profiles
-      where id = auth.uid() and role = 'admin'
+      where id = auth.uid() and role in ('super_admin', 'admin', 'manager')
     )
   );
 
@@ -35,7 +35,7 @@ create policy "Admins can update all profiles"
   using (
     exists (
       select 1 from public.profiles
-      where id = auth.uid() and role = 'admin'
+      where id = auth.uid() and role in ('super_admin', 'admin', 'manager')
     )
   );
 

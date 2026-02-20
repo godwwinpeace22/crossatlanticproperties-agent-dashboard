@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole } from "@/lib/roles";
 import { CommissionSettings } from "@/components/commission-settings";
 import { PropertyTypesManager } from "@/components/property-types-manager";
 import { LocationsManager } from "@/components/locations-manager";
 import { ApplicationFeeSettings } from "@/components/system-settings-manager";
+import { HeroSettingsManager } from "@/components/hero-settings-manager";
 import {
   Card,
   CardContent,
@@ -28,7 +30,7 @@ export default async function AdminSettingsPage() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  if (!isAdminRole(profile?.role)) {
     redirect("/dashboard");
   }
 
@@ -48,11 +50,12 @@ export default async function AdminSettingsPage() {
       </div>
 
       <Tabs defaultValue="system-settings" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="system-settings">Application Fee</TabsTrigger>
           <TabsTrigger value="commissions">Commissions</TabsTrigger>
           <TabsTrigger value="properties">Property Types</TabsTrigger>
           <TabsTrigger value="locations">Locations</TabsTrigger>
+          <TabsTrigger value="hero">Homepage Hero</TabsTrigger>
           <TabsTrigger value="system">System Info</TabsTrigger>
         </TabsList>
 
@@ -70,6 +73,10 @@ export default async function AdminSettingsPage() {
 
         <TabsContent value="locations" className="space-y-4">
           <LocationsManager />
+        </TabsContent>
+
+        <TabsContent value="hero" className="space-y-4">
+          <HeroSettingsManager />
         </TabsContent>
 
         <TabsContent value="system" className="space-y-4">

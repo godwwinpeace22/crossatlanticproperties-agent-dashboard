@@ -40,7 +40,7 @@ CREATE POLICY "Admins can view all user documents"
   USING (
     EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role = 'admin'
+      WHERE id = auth.uid() AND role in ('super_admin', 'admin', 'manager')
     )
   );
 
@@ -49,7 +49,7 @@ CREATE POLICY "Admins can manage all user documents"
   USING (
     EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role = 'admin'
+      WHERE id = auth.uid() AND role in ('super_admin', 'admin', 'manager')
     )
   );
 
@@ -104,6 +104,6 @@ CREATE POLICY "Admins can manage all documents in storage"
     bucket_id = 'user-documents' 
     AND EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role = 'admin'
+      WHERE id = auth.uid() AND role in ('super_admin', 'admin', 'manager')
     )
   );

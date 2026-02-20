@@ -1,16 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
 import { isAdminRole } from "@/lib/roles";
-import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+
+const ALLOWED_ROLES = ["admin", "manager", "staff", "agent", "buyer"] as const;
 
 export async function POST(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { userId: string } },
 ) {
   try {
     const supabase = await createClient();
 
-    // Verify admin access
     const {
       data: { user },
       error: authError,
@@ -36,45 +36,39 @@ export async function POST(
       );
     }
 
-    // Get current user status
-    const { data: targetUser, error: userError } = await supabase
-      .from("profiles")
-      .select("status")
-      .eq("id", params.userId)
-      .single();
+    const body = await request.json().catch(() => ({}));
+    const { role } = body as { role?: string };
 
-    if (userError || !targetUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (
+      !role ||
+      !ALLOWED_ROLES.includes(role as (typeof ALLOWED_ROLES)[number])
+    ) {
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
-    // Toggle status
-    const newStatus = targetUser.status === "active" ? "suspended" : "active";
+    if (params.userId === user.id && role !== "admin") {
+      return NextResponse.json(
+        { error: "You cannot change your own admin role" },
+        { status: 400 },
+      );
+    }
 
     const { error: updateError } = await supabase
       .from("profiles")
-      .update({ status: newStatus })
+      .update({ role, updated_at: new Date().toISOString() })
       .eq("id", params.userId);
 
     if (updateError) {
-      console.error("Error updating user status:", updateError);
+      console.error("Error updating user role:", updateError);
       return NextResponse.json(
-        { error: "Failed to update user status" },
+        { error: "Failed to update user role" },
         { status: 500 },
       );
     }
 
-    // Revalidate the user page
-    revalidatePath(`/dashboard/admin/users/${params.userId}`);
-
-    return NextResponse.json({
-      success: true,
-      message: `User ${
-        newStatus === "active" ? "activated" : "deactivated"
-      } successfully`,
-      newStatus,
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error toggling user status:", error);
+    console.error("Error updating user role:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

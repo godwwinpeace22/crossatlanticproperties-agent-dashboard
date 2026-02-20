@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrManager } from "@/lib/roles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AgentManagement } from "@/components/agent-management";
 import { Users, UserCheck, UserX, TrendingUp } from "lucide-react";
@@ -22,7 +23,7 @@ export default async function AdminAgentsPage() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  if (!isAdminOrManager(profile?.role)) {
     redirect("/dashboard");
   }
 
@@ -79,7 +80,7 @@ export default async function AdminAgentsPage() {
               submissions: [{ count: 0 }],
             };
           }
-        })
+        }),
       );
     } catch (error) {
       console.error("Error fetching agent stats:", error);

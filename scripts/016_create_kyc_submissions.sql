@@ -70,7 +70,7 @@ CREATE POLICY "Admins can manage all KYC submissions"
   ON public.kyc_submissions FOR ALL
   USING (EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
+    WHERE id = auth.uid() AND role in ('super_admin', 'admin', 'manager')
   ));
 
 -- Create trigger to update updated_at

@@ -43,6 +43,7 @@ import Link from "next/link";
 import { UserDocuments } from "@/components/user-documents";
 import { AdminUserKycActions } from "@/components/admin-user-kyc-actions";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/format";
+import { isAdminRole } from "@/lib/roles";
 
 interface PageProps {
   params: {
@@ -68,7 +69,7 @@ export default async function UserDetailPage({ params }: PageProps) {
     .eq("id", currentUser.id)
     .single();
 
-  if (profileError || currentProfile?.role !== "admin") {
+  if (profileError || !isAdminRole(currentProfile?.role)) {
     redirect("/dashboard");
   }
 
@@ -128,7 +129,7 @@ export default async function UserDetailPage({ params }: PageProps) {
         *,
         profiles!property_interests_user_id_fkey(full_name, email),
         property:properties(name, price, city, category)
-      `
+      `,
       )
       .eq("referring_agent_id", params.userId)
       .order("created_at", { ascending: false }),
@@ -140,7 +141,7 @@ export default async function UserDetailPage({ params }: PageProps) {
         *,
         property:properties(name, price, city, category),
         referring_agent:profiles!property_interests_referring_agent_id_fkey(full_name, email)
-      `
+      `,
       )
       .eq("user_id", params.userId)
       .order("created_at", { ascending: false }),
@@ -151,7 +152,7 @@ export default async function UserDetailPage({ params }: PageProps) {
         `
         *,
         agent:profiles!agent_hierarchy_agent_id_fkey(id, full_name, email, created_at)
-      `
+      `,
       )
       .eq("upline_id", params.userId)
       .eq("approved", true)
@@ -163,7 +164,7 @@ export default async function UserDetailPage({ params }: PageProps) {
         `
         *,
         upline:profiles!agent_hierarchy_upline_id_fkey(id, full_name, email)
-      `
+      `,
       )
       .eq("agent_id", params.userId)
       .eq("approved", true)
@@ -191,7 +192,7 @@ export default async function UserDetailPage({ params }: PageProps) {
           *,
           property:properties(name)
         )
-      `
+      `,
       )
       .eq("property_interest.user_id", params.userId)
       .order("due_date", { ascending: false }),
@@ -205,7 +206,7 @@ export default async function UserDetailPage({ params }: PageProps) {
           *,
           property:properties(name, price)
         )
-      `
+      `,
       )
       .eq("user_id", params.userId)
       .order("created_at", { ascending: false }),
@@ -232,8 +233,12 @@ export default async function UserDetailPage({ params }: PageProps) {
 
   const getRoleColor = (role: string) => {
     switch (role) {
+      case "super_admin":
+        return "bg-purple-200 text-purple-900 border-purple-300";
       case "admin":
         return "bg-purple-100 text-purple-800 border-purple-200";
+      case "manager":
+        return "bg-indigo-100 text-indigo-800 border-indigo-200";
       case "agent":
         return "bg-blue-100 text-blue-800 border-blue-200";
       case "buyer":
@@ -260,7 +265,11 @@ export default async function UserDetailPage({ params }: PageProps) {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
+      case "super_admin":
+        return Shield;
       case "admin":
+        return Shield;
+      case "manager":
         return Shield;
       case "agent":
         return UsersIcon;
@@ -348,7 +357,7 @@ export default async function UserDetailPage({ params }: PageProps) {
                   {targetUser.role}
                 </Badge>
                 <Badge className={getStatusColor(targetUser.status)}>
-                  {targetUser.status}
+                  {targetUser.agent_activated ? "Activated" : "Not Activated"}
                 </Badge>
               </div>
 
@@ -744,8 +753,8 @@ export default async function UserDetailPage({ params }: PageProps) {
                                   interest.status === "approved"
                                     ? "bg-green-100 text-green-800 border-green-200"
                                     : interest.status === "pending"
-                                    ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                                    : "bg-red-100 text-red-800 border-red-200"
+                                      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                      : "bg-red-100 text-red-800 border-red-200"
                                 }
                               >
                                 {interest.status}
@@ -808,7 +817,7 @@ export default async function UserDetailPage({ params }: PageProps) {
                                 Total Price:{" "}
                                 {formatCurrency(
                                   payment.property_interest?.property?.price ||
-                                    0
+                                    0,
                                 )}
                               </p>
                             </div>
@@ -822,8 +831,8 @@ export default async function UserDetailPage({ params }: PageProps) {
                                 payment.status === "successful"
                                   ? "bg-green-100 text-green-800 border-green-200"
                                   : payment.status === "pending"
-                                  ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                                  : "bg-red-100 text-red-800 border-red-200"
+                                    ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                    : "bg-red-100 text-red-800 border-red-200"
                               }
                             >
                               {payment.status}

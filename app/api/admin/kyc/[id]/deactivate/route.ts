@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { isAdminOrManager } from "@/lib/roles";
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 
 export async function POST(
   request: NextRequest,
@@ -36,41 +35,27 @@ export async function POST(
       );
     }
 
-    // Update KYC status to approved
     const { error: updateError } = await supabase
-      .from("kyc_submissions")
+      .from("profiles")
       .update({
-        status: "approved",
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: user.id,
+        agent_activated: false,
       })
       .eq("id", params.id);
 
     if (updateError) {
-      console.error("Error approving KYC:", updateError);
+      console.error("Error deactivating agent:", updateError);
       return NextResponse.json(
-        { error: "Failed to approve KYC" },
+        { error: "Failed to deactivate agent" },
         { status: 500 },
       );
     }
 
-    // Get the KYC submission to find the user and revalidate their page
-    const { data: kycSubmission } = await supabase
-      .from("kyc_submissions")
-      .select("user_id")
-      .eq("id", params.id)
-      .single();
-
-    if (kycSubmission) {
-      revalidatePath(`/dashboard/admin/users/${kycSubmission.user_id}`);
-    }
-
     return NextResponse.json({
       success: true,
-      message: "KYC approved successfully",
+      message: "Agent successfully deactivated",
     });
   } catch (error) {
-    console.error("Error approving KYC:", error);
+    console.error("Error deactivating agent:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

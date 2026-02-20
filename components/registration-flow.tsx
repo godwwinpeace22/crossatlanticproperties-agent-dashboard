@@ -77,7 +77,7 @@ export function RegistrationFlow({
           } catch (error) {
             console.error(`Failed to upload ${fileType}:`, error);
             throw new Error(
-              `Failed to upload ${documentTypeMap[fileType] || fileType}`
+              `Failed to upload ${documentTypeMap[fileType] || fileType}`,
             );
           }
         }
@@ -103,7 +103,7 @@ export function RegistrationFlow({
           } catch (error) {
             console.error(
               `Failed to upload business document ${i + 1}:`,
-              error
+              error,
             );
             throw new Error(`Failed to upload business document ${i + 1}`);
           }
@@ -123,6 +123,7 @@ export function RegistrationFlow({
           date_of_birth: formData.date_of_birth,
           incorporation_date: formData.incorporation_date,
           nationality: formData.nationality,
+          country_of_residence: formData.country_of_residence,
           country_of_incorporation: formData.country_of_incorporation,
           address: formData.address,
           phone_number: formData.phone_number,
@@ -189,8 +190,8 @@ export function RegistrationFlow({
             currentStep === "terms"
               ? "bg-blue-500 text-white"
               : currentStep === "kyc" || currentStep === "complete"
-              ? "bg-green-500 text-white"
-              : "bg-gray-300 text-gray-600"
+                ? "bg-green-500 text-white"
+                : "bg-gray-300 text-gray-600"
           }`}
         >
           {currentStep === "terms" ? (
@@ -212,8 +213,8 @@ export function RegistrationFlow({
             currentStep === "kyc"
               ? "bg-blue-500 text-white"
               : currentStep === "complete"
-              ? "bg-green-500 text-white"
-              : "bg-gray-300 text-gray-600"
+                ? "bg-green-500 text-white"
+                : "bg-gray-300 text-gray-600"
           }`}
         >
           {currentStep === "complete" ? (

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrManager } from "@/lib/roles";
 import { redirect } from "next/navigation";
 import { MarketSettingsManager } from "@/components/market-settings-manager";
 
@@ -20,7 +21,7 @@ export default async function MarketSettingsPage() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  if (!isAdminOrManager(profile?.role)) {
     redirect("/dashboard");
   }
 

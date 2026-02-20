@@ -58,7 +58,7 @@ export default function PropertyDetailPage({
     useSimilarProperties(propertyId, property?.category || "");
   const { nearbyProperties, isLoading: isLoadingNearby } = useNearbyProperties(
     propertyId,
-    property?.city || ""
+    property?.city || "",
   );
   const { isFavorite, mutate: mutateFavorite } = useFavoriteStatus(propertyId);
   const {
@@ -100,8 +100,8 @@ export default function PropertyDetailPage({
     return status === "available"
       ? "For Sale"
       : status === "sold"
-      ? "Sold"
-      : status.charAt(0).toUpperCase() + status.slice(1);
+        ? "Sold"
+        : status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   const getInterestStatusDisplay = (status: string) => {
@@ -575,11 +575,11 @@ export default function PropertyDetailPage({
                           {Math.round(
                             ((getOriginalPrice() - property.promotional_price) /
                               getOriginalPrice()) *
-                              100
+                              100,
                           )}
                           % - Offer ends{" "}
                           {new Date(
-                            property.promotion_end_date
+                            property.promotion_end_date,
                           ).toLocaleDateString()}
                         </div>
                       </div>
@@ -592,7 +592,7 @@ export default function PropertyDetailPage({
                       <div className="inline-block bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
                         You Save{" "}
                         {formatPrice(
-                          getOriginalPrice() - property.promotional_price
+                          getOriginalPrice() - property.promotional_price,
                         )}
                         !
                       </div>
@@ -636,9 +636,7 @@ export default function PropertyDetailPage({
                       onClick={() => setIsInterestWorkflowOpen(true)}
                       disabled={isCheckingInterest}
                     >
-                      {isCheckingInterest
-                        ? "Checking..."
-                        : "Apply for this property"}
+                      {isCheckingInterest ? "Checking..." : "Express Interest"}
                     </Button>
                   )}
                   <Button
@@ -959,7 +957,7 @@ export default function PropertyDetailPage({
                               {formatSquareFeet(
                                 nearbyProp.lotSize ||
                                   parseInt(nearbyProp.sqft || "0") ||
-                                  0
+                                  0,
                               )}
                             </span>
                           </div>

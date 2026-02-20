@@ -43,7 +43,7 @@ create policy "Only admins can manage locations"
   using (
     exists (
       select 1 from public.profiles
-      where id = auth.uid() and role = 'admin'
+      where id = auth.uid() and role in ('super_admin', 'admin', 'manager')
     )
   );
 

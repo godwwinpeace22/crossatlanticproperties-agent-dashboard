@@ -1,6 +1,7 @@
 import type React from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminOrManager } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -24,7 +25,7 @@ export default async function BlogLayout({
     .eq("id", data.user.id)
     .single();
 
-  if (!profile || profile.role !== "admin") {
+  if (!profile || !isAdminOrManager(profile.role)) {
     // Redirect non-admin users to their dashboard
     redirect("/dashboard");
   }

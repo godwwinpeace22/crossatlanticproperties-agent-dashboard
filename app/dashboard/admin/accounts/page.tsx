@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole } from "@/lib/roles";
 import { redirect } from "next/navigation";
 import { AdminAccountCreation } from "@/components/admin-account-creation";
 import {
@@ -28,7 +29,7 @@ export default async function AdminAccountsPage() {
     .eq("id", user.id)
     .single();
 
-  if (profileError || profile?.role !== "admin") {
+  if (profileError || !isAdminRole(profile?.role)) {
     redirect("/dashboard");
   }
 
@@ -39,10 +40,13 @@ export default async function AdminAccountsPage() {
     .neq("role", "admin");
 
   const stats =
-    accountStats?.reduce((acc, profile) => {
-      acc[profile.role] = (acc[profile.role] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>) || {};
+    accountStats?.reduce(
+      (acc, profile) => {
+        acc[profile.role] = (acc[profile.role] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    ) || {};
 
   const roleIcons = {
     agent: Users,

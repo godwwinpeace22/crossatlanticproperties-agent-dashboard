@@ -15,7 +15,7 @@ export default function HomePage() {
       <ImmersivePropertyShowcase />
       <HowItWorks />
       <LocationCards />
-      <WhyChooseUsSection />
+      {/* <WhyChooseUsSection /> */}
       <TestimonialSection />
       <CTASection />
     </div>

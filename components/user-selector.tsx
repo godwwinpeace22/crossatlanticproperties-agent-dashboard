@@ -123,6 +123,7 @@ export function UserSelector({ selectedUserId }: UserSelectorProps) {
                   <SelectItem value="agent">Agents</SelectItem>
                   <SelectItem value="buyer">Buyers</SelectItem>
                   <SelectItem value="staff">Staff</SelectItem>
+                  <SelectItem value="manager">Managers</SelectItem>
                   <SelectItem value="admin">Admins</SelectItem>
                 </SelectContent>
               </Select>

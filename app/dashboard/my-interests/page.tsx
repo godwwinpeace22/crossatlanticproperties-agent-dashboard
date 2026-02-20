@@ -30,7 +30,7 @@ export default async function MyPaymentsPage() {
         *,
         property:properties(*)
       )
-    `
+    `,
     )
     .eq("property_interest.user_id", user.id)
     .order("due_date", { ascending: true });
@@ -41,9 +41,11 @@ export default async function MyPaymentsPage() {
       `
     *,
     property:properties(*)
-  `
+  `,
     )
     .eq("user_id", user?.id);
+
+  // console.log({ installmentPayments, interests, user });
 
   return (
     <MyInterests

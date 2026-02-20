@@ -47,7 +47,7 @@ create policy "Anyone can view active property types"
   on public.property_types for select
   using (is_active = true or exists (
     select 1 from public.profiles
-    where id = auth.uid() and role = 'admin'
+    where id = auth.uid() and role in ('super_admin', 'admin', 'manager')
   ));
 
 create policy "Only admins can manage property types"
@@ -55,7 +55,7 @@ create policy "Only admins can manage property types"
   using (
     exists (
       select 1 from public.profiles
-      where id = auth.uid() and role = 'admin'
+      where id = auth.uid() and role in ('super_admin', 'admin', 'manager')
     )
   );
 

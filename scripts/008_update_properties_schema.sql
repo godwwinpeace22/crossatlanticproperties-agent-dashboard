@@ -56,7 +56,7 @@ create policy "Anyone can view active categories"
   on public.property_categories for select
   using (is_active = true or exists (
     select 1 from public.profiles
-    where id = auth.uid() and role = 'admin'
+    where id = auth.uid() and role in ('super_admin', 'admin', 'manager')
   ));
 
 create policy "Only admins can manage categories"
@@ -64,7 +64,7 @@ create policy "Only admins can manage categories"
   using (
     exists (
       select 1 from public.profiles
-      where id = auth.uid() and role = 'admin'
+      where id = auth.uid() and role in ('super_admin', 'admin', 'manager')
     )
   );
 

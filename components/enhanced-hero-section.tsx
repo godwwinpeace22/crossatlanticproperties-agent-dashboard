@@ -21,14 +21,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePublicSystemSettings } from "@/hooks/use-system-settings";
 
-const heroImages = [
-  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
-  "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
-  "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
-  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
-  "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3",
+const defaultHeroSlides = [
+  {
+    type: "image",
+    url: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
+  },
+  {
+    type: "image",
+    url: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
+  },
+  {
+    type: "image",
+    url: "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
+  },
+  {
+    type: "image",
+    url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
+  },
+  {
+    type: "image",
+    url: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3",
+  },
 ];
+
+const defaultHeroTitle = "Find Your Dream Home";
+const defaultHeroSubtitle =
+  "Discover premium properties across Africa with intelligent matching technology that connects you to your perfect home or investment opportunity";
+
+type HeroSlide = {
+  type: "image" | "video";
+  url: string;
+  poster?: string;
+};
 
 const stats = [
   { icon: Home, value: "50K+", label: "Properties Listed" },
@@ -41,14 +67,46 @@ export default function EnhancedHeroSection() {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("any");
   const [listingType, setListingType] = useState("buy");
+  const [heroTitle, setHeroTitle] = useState(defaultHeroTitle);
+  const [heroSubtitle, setHeroSubtitle] = useState(defaultHeroSubtitle);
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(defaultHeroSlides);
+  const { settings, loading: settingsLoading } = usePublicSystemSettings();
   const router = useRouter();
 
   useEffect(() => {
+    if (settingsLoading) return;
+
+    const title = settings.hero_title || defaultHeroTitle;
+    const subtitle = settings.hero_subtitle || defaultHeroSubtitle;
+    const slides = Array.isArray(settings.hero_slides)
+      ? settings.hero_slides
+      : defaultHeroSlides;
+
+    const normalizedSlides = slides
+      .map((slide: any) => {
+        if (!slide?.url) return null;
+        return {
+          type: slide.type === "video" ? "video" : "image",
+          url: String(slide.url),
+          poster: slide.poster ? String(slide.poster) : undefined,
+        } as HeroSlide;
+      })
+      .filter(Boolean) as HeroSlide[];
+
+    setHeroTitle(title);
+    setHeroSubtitle(subtitle);
+    setHeroSlides(
+      normalizedSlides.length > 0 ? normalizedSlides : defaultHeroSlides,
+    );
+  }, [settings, settingsLoading]);
+
+  useEffect(() => {
+    if (heroSlides.length === 0) return;
     const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+      setCurrentImageIndex((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [heroSlides.length]);
 
   const handleSearch = () => {
     // Build search parameters to match what the properties page expects
@@ -79,20 +137,33 @@ export default function EnhancedHeroSection() {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image Carousel */}
       <div className="absolute inset-0 z-0">
-        {heroImages.map((image, index) => (
+        {heroSlides.map((slide, index) => (
           <div
             key={index}
             className={`absolute inset-0 transition-opacity duration-1000 ${
               index === currentImageIndex ? "opacity-100" : "opacity-0"
             }`}
           >
-            <Image
-              src={image || "/placeholder.svg"}
-              alt={`Hero background ${index + 1}`}
-              fill
-              className="object-cover"
-              priority={index === 0}
-            />
+            {slide.type === "video" ? (
+              <video
+                className="h-full w-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+                poster={slide.poster}
+              >
+                <source src={slide.url} />
+              </video>
+            ) : (
+              <Image
+                src={slide.url || "/placeholder.svg"}
+                alt={`Hero background ${index + 1}`}
+                fill
+                className="object-cover"
+                priority={index === 0}
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30" />
           </div>
         ))}
@@ -116,16 +187,26 @@ export default function EnhancedHeroSection() {
         <div className="max-w-5xl mx-auto space-y-8">
           {/* Main Heading */}
           <div className="space-y-6 animate-fade-in">
-            <h1 className="text-5xl md:text-7xl lg:text-6xl font-display font-bold leading-tight">
-              Find Your
-              <span className="block bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-                Dream Home
-              </span>
-            </h1>
+            {(() => {
+              const [leadRaw, emphasisRaw] = heroTitle.includes("|")
+                ? heroTitle.split("|")
+                : [heroTitle, ""];
+              const lead = leadRaw?.trim() || defaultHeroTitle;
+              const emphasis = emphasisRaw?.trim();
+
+              return (
+                <h1 className="text-5xl md:text-7xl lg:text-6xl font-display font-bold leading-tight">
+                  {lead}
+                  {emphasis ? (
+                    <span className="block bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
+                      {emphasis}
+                    </span>
+                  ) : null}
+                </h1>
+              );
+            })()}
             <p className="text-sm md:text-lg lg:text-lg font-light max-w-3xl mx-auto leading-relaxed">
-              Discover premium properties across Africa with intelligent
-              matching technology that connects you to your perfect home or
-              investment opportunity
+              {heroSubtitle}
             </p>
           </div>
 

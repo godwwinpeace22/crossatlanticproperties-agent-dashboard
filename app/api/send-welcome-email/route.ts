@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole } from "@/lib/roles";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -33,10 +34,10 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (profileError || profile?.role !== "admin") {
+    if (profileError || !isAdminRole(profile?.role)) {
       return NextResponse.json(
         { error: "Admin access required" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -158,7 +159,7 @@ Need help? Contact us at support@crossatlanticproperties.com
       console.error("Resend error:", emailError);
       return NextResponse.json(
         { error: "Failed to send email" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -171,7 +172,7 @@ Need help? Contact us at support@crossatlanticproperties.com
     console.error("Email API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import {
   Menu,
   X,
@@ -20,18 +21,19 @@ import { NotificationBell } from "@/components/notification-bell";
 export function Header() {
   const { locations, isLoading } = useLocations();
   const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          {/* <Image
+          <Image
             src="/logo.png"
             alt="Crossatlanticproperties Logo"
-            width={420}
+            width={120}
             height={40}
-            className="h-auto w-[150px]"
-          /> */}
-          CrossAtlanticProperties
+            className="h-auto w-[50px]"
+          />
+          <span className="hidden sm:inline">CrossAtlanticProperties</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium ml-10">
           <Link href="/" className="transition-colors hover:text-orange-500">
@@ -167,7 +169,7 @@ export function Header() {
               </Button>
             </>
           )}
-          <Sheet>
+          <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="md:hidden">
                 <Menu className="h-5 w-5" />
@@ -179,18 +181,21 @@ export function Header() {
                 <Link
                   href="/"
                   className="transition-colors hover:text-orange-500"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
                   Home
                 </Link>
                 <Link
                   href="/properties"
                   className="transition-colors hover:text-orange-500"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
                   Properties
                 </Link>
                 <Link
                   href="/property-types"
                   className="transition-colors hover:text-orange-500"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
                   Property Types
                 </Link>
@@ -198,6 +203,7 @@ export function Header() {
                 <Link
                   href="/blog"
                   className="transition-colors hover:text-orange-500"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
                   Blog
                 </Link>
@@ -205,6 +211,7 @@ export function Header() {
                 <Link
                   href="/market-analysis"
                   className="transition-colors hover:text-orange-500 border-t pt-4"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
                   Market Analysis
                 </Link>
@@ -212,12 +219,14 @@ export function Header() {
                 <Link
                   href="/about"
                   className="transition-colors hover:text-orange-500"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
                   About
                 </Link>
                 <Link
                   href="/contact"
                   className="transition-colors hover:text-orange-500"
+                  onClick={() => setIsMobileNavOpen(false)}
                 >
                   Contact
                 </Link>
@@ -226,6 +235,7 @@ export function Header() {
                     <Link
                       href="/dashboard"
                       className="transition-colors hover:text-orange-500"
+                      onClick={() => setIsMobileNavOpen(false)}
                     >
                       Dashboard
                     </Link>
@@ -235,12 +245,14 @@ export function Header() {
                     <Link
                       href="/login"
                       className="transition-colors hover:text-orange-500"
+                      onClick={() => setIsMobileNavOpen(false)}
                     >
                       Sign In
                     </Link>
                     <Link
                       href="/register"
                       className="transition-colors hover:text-orange-500"
+                      onClick={() => setIsMobileNavOpen(false)}
                     >
                       Sign Up
                     </Link>
