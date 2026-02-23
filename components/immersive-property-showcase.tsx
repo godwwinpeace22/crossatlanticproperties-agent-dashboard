@@ -82,7 +82,7 @@ const fetchProperties = async (): Promise<Property[]> => {
         images: images || [],
         primaryImage,
       };
-    })
+    }),
   );
 
   return propertiesWithImages;
@@ -125,7 +125,7 @@ export default function ImmersivePropertyShowcase() {
       setFeaturedProperties(allProperties);
     } else {
       const filtered = allProperties.filter(
-        (property) => property.category === category
+        (property) => property.category === category,
       );
       setFeaturedProperties(filtered);
     }
@@ -140,9 +140,7 @@ export default function ImmersivePropertyShowcase() {
 
   // Update featured properties when data loads or category changes
   useEffect(() => {
-    if (allProperties && allProperties.length > 0) {
-      filterProperties(selectedCategory);
-    }
+    filterProperties(selectedCategory);
   }, [allProperties, selectedCategory]);
 
   // Auto-slide images for each property
@@ -156,18 +154,21 @@ export default function ImmersivePropertyShowcase() {
       const startIndex = currentPropertySet * PROPERTIES_PER_VIEW;
       const endIndex = Math.min(
         startIndex + PROPERTIES_PER_VIEW,
-        featuredProperties.length
+        featuredProperties.length,
       );
 
       for (let i = startIndex; i < endIndex; i++) {
         const property = featuredProperties[i];
         if (property.images && property.images.length > 1) {
-          intervalRefs.current[property.id] = setInterval(() => {
-            setImageIndices((prev) => ({
-              ...prev,
-              [property.id]: (prev[property.id] + 1) % property.images.length,
-            }));
-          }, 4000 + (i - startIndex) * 1000); // Stagger the intervals
+          intervalRefs.current[property.id] = setInterval(
+            () => {
+              setImageIndices((prev) => ({
+                ...prev,
+                [property.id]: (prev[property.id] + 1) % property.images.length,
+              }));
+            },
+            4000 + (i - startIndex) * 1000,
+          ); // Stagger the intervals
         }
       }
     }
@@ -179,15 +180,17 @@ export default function ImmersivePropertyShowcase() {
 
   const nextPropertySet = () => {
     const totalSets = Math.ceil(
-      featuredProperties.length / PROPERTIES_PER_VIEW
+      featuredProperties.length / PROPERTIES_PER_VIEW,
     );
+    if (totalSets === 0) return;
     setCurrentPropertySet((prev) => (prev + 1) % totalSets);
   };
 
   const prevPropertySet = () => {
     const totalSets = Math.ceil(
-      featuredProperties.length / PROPERTIES_PER_VIEW
+      featuredProperties.length / PROPERTIES_PER_VIEW,
     );
+    if (totalSets === 0) return;
     setCurrentPropertySet((prev) => (prev - 1 + totalSets) % totalSets);
   };
 
@@ -204,7 +207,7 @@ export default function ImmersivePropertyShowcase() {
   // Get current properties to display
   const currentProperties = featuredProperties.slice(
     currentPropertySet * PROPERTIES_PER_VIEW,
-    (currentPropertySet + 1) * PROPERTIES_PER_VIEW
+    (currentPropertySet + 1) * PROPERTIES_PER_VIEW,
   );
 
   // Loading state
@@ -309,6 +312,29 @@ export default function ImmersivePropertyShowcase() {
           </div>
         </div>
 
+        {featuredProperties.length === 0 && (
+          <div className="max-w-2xl mx-auto rounded-2xl border-gray-200 bg-white p-8 text-center">
+            <h3 className="text-2xl font-display font-bold text-gray-900 mb-2">
+              No properties found
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {selectedCategory === "all"
+                ? "There are no available properties at the moment."
+                : `No ${selectedCategory} properties are available right now.`}
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {selectedCategory !== "all" && (
+                <Button
+                  onClick={() => handleCategoryChange("all")}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  View All Properties
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="max-w-7xl mx-auto">
           {/* Properties Grid */}
           <div
@@ -316,8 +342,8 @@ export default function ImmersivePropertyShowcase() {
               currentProperties.length === 1
                 ? "lg:grid-cols-1 max-w-4xl mx-auto"
                 : currentProperties.length === 2
-                ? "lg:grid-cols-2"
-                : "lg:grid-cols-3"
+                  ? "lg:grid-cols-2"
+                  : "lg:grid-cols-3"
             }`}
           >
             {currentProperties.map((property, propertyIndex) => {
@@ -475,7 +501,7 @@ export default function ImmersivePropertyShowcase() {
                             <Maximize className="h-4 w-4 text-dnx-blue" />
                             <span className="font-semibold text-xs text-gray-900">
                               {new Intl.NumberFormat("en-US").format(
-                                property.squareFeet
+                                property.squareFeet,
                               )}
                             </span>
                             <span className="text-xs text-gray-600">sq ft</span>
@@ -490,39 +516,41 @@ export default function ImmersivePropertyShowcase() {
           </div>
 
           {/* Navigation */}
-          <div className="flex justify-center items-center space-x-4 mt-12">
-            <Button
-              onClick={prevPropertySet}
-              variant="outline"
-              size="icon"
-              className="rounded-full w-12 h-12 border-dnx-blue/20 hover:bg-dnx-blue hover:text-white"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+          {featuredProperties.length > 0 && (
+            <div className="flex justify-center items-center space-x-4 mt-12">
+              <Button
+                onClick={prevPropertySet}
+                variant="outline"
+                size="icon"
+                className="rounded-full w-12 h-12 border-dnx-blue/20 hover:bg-dnx-blue hover:text-white"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
 
-            <div className="flex space-x-2">
-              {Array.from({ length: totalPages }, (_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentPropertySet(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentPropertySet
-                      ? "bg-dnx-orange"
-                      : "bg-gray-300"
-                  }`}
-                />
-              ))}
+              <div className="flex space-x-2">
+                {Array.from({ length: totalPages }, (_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPropertySet(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      index === currentPropertySet
+                        ? "bg-dnx-orange"
+                        : "bg-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <Button
+                onClick={nextPropertySet}
+                variant="outline"
+                size="icon"
+                className="rounded-full w-12 h-12 border-dnx-blue/20 hover:bg-dnx-blue hover:text-white"
+              >
+                <ArrowRight className="h-5 w-5" />
+              </Button>
             </div>
-
-            <Button
-              onClick={nextPropertySet}
-              variant="outline"
-              size="icon"
-              className="rounded-full w-12 h-12 border-dnx-blue/20 hover:bg-dnx-blue hover:text-white"
-            >
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-          </div>
+          )}
         </div>
       </div>
     </section>

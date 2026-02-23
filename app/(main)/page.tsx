@@ -13,10 +13,10 @@ export default function HomePage() {
       <EnhancedHeroSection />
       <PropertyTypesShowcase />
       <ImmersivePropertyShowcase />
-      <HowItWorks />
+      {/* <HowItWorks /> */}
       <LocationCards />
       {/* <WhyChooseUsSection /> */}
-      <TestimonialSection />
+      {/* <TestimonialSection /> */}
       <CTASection />
     </div>
   );

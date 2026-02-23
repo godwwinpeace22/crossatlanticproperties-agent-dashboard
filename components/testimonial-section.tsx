@@ -29,21 +29,31 @@ const testimonials = [
 
 export default function TestimonialSection() {
   return (
-    <section className="w-full py-12 md:py-16 lg:py-20 bg-muted/30">
-      <div className="container mx-auto px-4 md:px-6">
+    <section
+      className="relative w-full py-12 md:py-16 lg:py-20 bg-cover bg-center bg-no-repeat md:bg-fixed"
+      style={{
+        backgroundImage:
+          "url('/city-skyline-at-sunset-with-orange-and-purple-sky.jpg')",
+      }}
+    >
+      <div className="absolute inset-0 bg-black/55" aria-hidden="true" />
+      <div className="container relative mx-auto px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+            <h2 className="text-3xl font-bold tracking-tighter text-white sm:text-4xl md:text-5xl">
               What Our Clients Say
             </h2>
-            <p className="max-w-[700px] text-muted-foreground md:text-xl/relaxed">
+            <p className="max-w-[700px] text-white/85 md:text-xl/relaxed">
               Hear from people who have found their perfect properties through
               our platform.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 w-full max-w-5xl">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="text-left">
+            {testimonials.map((testimonial) => (
+              <Card
+                key={testimonial.author}
+                className="text-left bg-background/95"
+              >
                 <CardContent className="p-6">
                   <Quote className="h-8 w-8 text-primary mb-4" />
                   <p className="mb-4">{testimonial.quote}</p>

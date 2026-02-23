@@ -4,7 +4,14 @@ import { ArrowRight } from "lucide-react";
 
 export function CTASection() {
   return (
-    <section className="section-padding relative overflow-hidden bg-slate-900 text-white">
+    <section
+      className="section-padding relative overflow-hidden bg-cover bg-center bg-no-repeat text-white md:bg-fixed"
+      style={{
+        backgroundImage:
+          "url('/sydney-opera-house-with-city-skyline-at-sunset.jpg')",
+      }}
+    >
+      <div className="absolute inset-0 bg-slate-950/70" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_55%)]" />
       <div className="container-custom relative z-10">
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">

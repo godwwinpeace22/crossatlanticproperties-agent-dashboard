@@ -88,7 +88,7 @@ export default function PropertiesPage() {
 
   // Interest workflow state
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(
-    null
+    null,
   );
   const [isInterestWorkflowOpen, setIsInterestWorkflowOpen] = useState(false);
 
@@ -146,7 +146,7 @@ export default function PropertiesPage() {
         .order("name");
       if (error) throw error;
       return data;
-    }
+    },
   );
 
   // Create cache key for SWR
@@ -173,7 +173,7 @@ export default function PropertiesPage() {
       priceRange,
       sortBy,
       currentPage,
-    ]
+    ],
   );
 
   // SWR fetcher function
@@ -185,7 +185,7 @@ export default function PropertiesPage() {
     // Apply filters
     if (searchQuery) {
       query = query.or(
-        `name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`
+        `name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%`,
       );
     }
 
@@ -243,7 +243,7 @@ export default function PropertiesPage() {
         .select("id, name");
 
       const propertyTypeMap = new Map(
-        propertyTypesData?.map((type) => [type.id, type.name]) || []
+        propertyTypesData?.map((type) => [type.id, type.name]) || [],
       );
 
       // Fetch images for each property
@@ -267,7 +267,7 @@ export default function PropertiesPage() {
             propertyTypeName:
               propertyTypeMap.get(property.propertyType) || "Unknown",
           };
-        })
+        }),
       );
 
       return {
@@ -313,10 +313,10 @@ export default function PropertiesPage() {
     return status === "available"
       ? "Available"
       : status === "sold"
-      ? "Sold"
-      : status === "reserved"
-      ? "Reserved"
-      : status.charAt(0).toUpperCase() + status.slice(1);
+        ? "Sold"
+        : status === "reserved"
+          ? "Reserved"
+          : status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   const handleLoadMore = () => {
@@ -353,7 +353,7 @@ export default function PropertiesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-500 to-orange-500 text-white py-16">
+      <section className="bg-gradient-to-r from-orange-500 to-orange-100 text-white py-16">
         <div className="container-custom">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-display font-bold mb-4">

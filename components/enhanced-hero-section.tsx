@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { usePublicSystemSettings } from "@/hooks/use-system-settings";
 
-const defaultHeroSlides = [
+const defaultHeroSlides: HeroSlide[] = [
   {
     type: "image",
     url: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3",
@@ -250,7 +250,6 @@ export default function EnhancedHeroSection() {
 
                 {/* Location Search */}
                 <div className="flex-1 relative">
-                  <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
                   <Input
                     type="text"
                     placeholder="Enter location, city, or property ID..."
@@ -279,8 +278,7 @@ export default function EnhancedHeroSection() {
                   {[
                     "Houses in Lagos",
                     "Apartments in Abuja",
-                    "Land in Ghana",
-                    "Villas in Dubai",
+                    "Land in PortHarcourt",
                   ].map((filter, index) => (
                     <button
                       key={index}
@@ -315,11 +313,11 @@ export default function EnhancedHeroSection() {
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30">
+      {/* <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30">
         <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
           <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-bounce" />
         </div>
-      </div>
+      </div> */}
     </section>
   );
 }

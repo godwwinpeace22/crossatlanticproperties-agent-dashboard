@@ -29,7 +29,7 @@ export function Footer() {
           {/* Logo */}
           <div className="flex items-center gap-3 mb-6 lg:mb-0">
             <Image
-              src="/logo.png"
+              src="/logo.jpg"
               alt="Crossatlanticproperties Logo"
               width={120}
               height={40}
@@ -87,11 +87,11 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           {/* Company info */}
           <div className="lg:col-span-1">
-            <p className="text-gray-300 mb-6 leading-relaxed">
+            {/* <p className="text-gray-300 mb-6 leading-relaxed">
               Connecting property buyers, sellers, and investors across Nigeria
               with premium real estate opportunities. Your dream property
               awaits.
-            </p>
+            </p> */}
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <svg
@@ -102,11 +102,13 @@ export function Footer() {
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                 </svg>
                 <div className="text-gray-300 text-sm">
-                  <div className="mb-1">
+                  <div className="mb-3">
+                    <strong>Nigeria</strong> <br />
                     Block D flat 4, Sky Memorial Complex, Wuse Zone 5, FCT,
                     Abuja, Nigeria
                   </div>
                   <div>
+                    <strong>United Kingdom</strong> <br />
                     The Ingenuity Lab, C16 The Ingenuity Centre, Jubilee Campus,
                     University of Nottingham
                   </div>
@@ -121,6 +123,7 @@ export function Footer() {
                   <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
                 </svg>
                 <div className="text-gray-300 text-sm">
+                  <div>+234 806 158 2043</div>
                   <div>+234 708 611 2909</div>
                   <div>+44 743 546 8699</div>
                 </div>
@@ -290,7 +293,7 @@ export function Footer() {
         <div className="border-t border-gray-700 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-sm">
-              ©2025 CrossAtlantic Properties. All Rights Reserved.
+              ©2026 CrossAtlantic Properties. All Rights Reserved.
             </p>
             <div className="flex gap-6">
               <a

@@ -2,40 +2,76 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import {
-  Menu,
-  X,
-  MapPin,
-  ChevronDown,
-  User as UserIcon,
-  LogOut,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, ChevronDown, User as UserIcon, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLocations } from "@/hooks/use-locations";
 import { useAuth } from "@/hooks/use-auth";
 import { NotificationBell } from "@/components/notification-bell";
 
 export function Header() {
   const { locations, isLoading } = useLocations();
-  const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  const primaryLinks = [
+    { href: "/", label: "Home" },
+    { href: "/properties", label: "Properties" },
+    { href: "/property-types", label: "Estates" },
+    { href: "/blog", label: "Blog" },
+    { href: "/market-analysis", label: "Market Analysis" },
+    { href: "/about", label: "About" },
+    { href: "/contact", label: "Contact" },
+  ];
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node)
+      ) {
+        closeMobileMenu();
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        closeMobileMenu();
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center">
+    <header className="sticky top-0 z-50 w-full border-b bg-background">
+      <div className="container mx-auto flex h-16 items-center gap-2 px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <Image
-            src="/logo.png"
+            src="/logo.jpg"
             alt="Crossatlanticproperties Logo"
             width={120}
             height={40}
             className="h-auto w-[50px]"
           />
-          <span className="hidden sm:inline">CrossAtlanticProperties</span>
+          <span className="hidden md:inline">CrossAtlantic Properties</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium ml-10">
+
+        <nav className="hidden lg:flex items-center gap-6 text-sm font-medium ml-8 xl:ml-10">
           <Link href="/" className="transition-colors hover:text-orange-500">
             Home
           </Link>
@@ -75,36 +111,26 @@ export function Header() {
               </div>
             </div>
           </div>
-          <Link
-            href="/blog"
-            className="transition-colors hover:text-orange-500"
-          >
-            Blog
-          </Link>
-          <Link
-            href="/market-analysis"
-            className="transition-colors hover:text-orange-500"
-          >
-            Market Analysis
-          </Link>
-          <Link
-            href="/about"
-            className="transition-colors hover:text-orange-500"
-          >
-            About
-          </Link>
-          <Link
-            href="/contact"
-            className="transition-colors hover:text-orange-500"
-          >
-            Contact
-          </Link>
+
+          {primaryLinks.slice(3).map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="transition-colors hover:text-orange-500"
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
-        <div className="flex items-center gap-2 ml-auto">
+
+        <div className="ml-auto flex items-center gap-2">
           {isAuthenticated ? (
             <>
-              <NotificationBell />
-              <div className="relative group hidden md:flex items-center">
+              <div className="hidden sm:block">
+                <NotificationBell />
+              </div>
+
+              <div className="relative group hidden lg:flex items-center">
                 <div className="flex items-center cursor-pointer">
                   {user?.user_metadata?.avatar_url ? (
                     <img
@@ -160,107 +186,121 @@ export function Header() {
                 variant="ghost"
                 size="sm"
                 asChild
-                className="hidden md:flex"
+                className="hidden lg:flex"
               >
                 <Link href="/login">Sign In</Link>
               </Button>
-              <Button size="sm" asChild className="hidden md:flex">
+              <Button size="sm" asChild className="hidden lg:flex">
                 <Link href="/register">Sign Up</Link>
               </Button>
             </>
           )}
-          <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="p-4">
-              <nav className="flex flex-col gap-4 text-sm font-medium">
-                <Link
-                  href="/"
-                  className="transition-colors hover:text-orange-500"
-                  onClick={() => setIsMobileNavOpen(false)}
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/properties"
-                  className="transition-colors hover:text-orange-500"
-                  onClick={() => setIsMobileNavOpen(false)}
-                >
-                  Properties
-                </Link>
-                <Link
-                  href="/property-types"
-                  className="transition-colors hover:text-orange-500"
-                  onClick={() => setIsMobileNavOpen(false)}
-                >
-                  Property Types
-                </Link>
 
-                <Link
-                  href="/blog"
-                  className="transition-colors hover:text-orange-500"
-                  onClick={() => setIsMobileNavOpen(false)}
-                >
-                  Blog
-                </Link>
+          <div className="relative lg:hidden" ref={mobileMenuRef}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              aria-expanded={isMobileMenuOpen}
+              aria-haspopup="menu"
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
 
-                <Link
-                  href="/market-analysis"
-                  className="transition-colors hover:text-orange-500 border-t pt-4"
-                  onClick={() => setIsMobileNavOpen(false)}
-                >
-                  Market Analysis
-                </Link>
+            {isMobileMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-[min(90vw,20rem)] max-h-[70vh] overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md z-[120]">
+                <nav className="p-1 text-sm">
+                  {primaryLinks.slice(0, 3).map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="block rounded-sm px-2 py-1.5 hover:bg-accent"
+                      onClick={closeMobileMenu}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
 
-                <Link
-                  href="/about"
-                  className="transition-colors hover:text-orange-500"
-                  onClick={() => setIsMobileNavOpen(false)}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className="transition-colors hover:text-orange-500"
-                  onClick={() => setIsMobileNavOpen(false)}
-                >
-                  Contact
-                </Link>
-                {isAuthenticated ? (
-                  <>
+                  <div className="my-1 h-px bg-muted" />
+                  <div className="px-2 py-1 text-xs uppercase tracking-wide text-muted-foreground">
+                    Locations
+                  </div>
+
+                  {locations.map((location) => (
                     <Link
-                      href="/dashboard"
-                      className="transition-colors hover:text-orange-500"
-                      onClick={() => setIsMobileNavOpen(false)}
+                      key={location.id}
+                      href={`/properties?location=${location.id}`}
+                      className="block rounded-sm px-2 py-1.5 hover:bg-accent"
+                      onClick={closeMobileMenu}
                     >
-                      Dashboard
+                      {location.name}
                     </Link>
-                  </>
-                ) : (
-                  <>
+                  ))}
+                  {locations.length === 0 && isLoading && (
+                    <div className="px-2 py-1.5 text-muted-foreground">
+                      Loading locations...
+                    </div>
+                  )}
+
+                  <div className="my-1 h-px bg-muted" />
+
+                  {primaryLinks.slice(3).map((link) => (
                     <Link
-                      href="/login"
-                      className="transition-colors hover:text-orange-500"
-                      onClick={() => setIsMobileNavOpen(false)}
+                      key={link.href}
+                      href={link.href}
+                      className="block rounded-sm px-2 py-1.5 hover:bg-accent"
+                      onClick={closeMobileMenu}
                     >
-                      Sign In
+                      {link.label}
                     </Link>
-                    <Link
-                      href="/register"
-                      className="transition-colors hover:text-orange-500"
-                      onClick={() => setIsMobileNavOpen(false)}
-                    >
-                      Sign Up
-                    </Link>
-                  </>
-                )}
-              </nav>
-            </SheetContent>
-          </Sheet>
+                  ))}
+
+                  <div className="my-1 h-px bg-muted" />
+
+                  {isAuthenticated ? (
+                    <>
+                      <Link
+                        href="/dashboard"
+                        className="block rounded-sm px-2 py-1.5 hover:bg-accent"
+                        onClick={closeMobileMenu}
+                      >
+                        Dashboard
+                      </Link>
+                      <button
+                        onClick={async () => {
+                          closeMobileMenu();
+                          await logout();
+                          window.location.href = "/";
+                        }}
+                        className="block w-full text-left rounded-sm px-2 py-1.5 hover:bg-accent"
+                        type="button"
+                      >
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login"
+                        className="block rounded-sm px-2 py-1.5 hover:bg-accent"
+                        onClick={closeMobileMenu}
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        href="/register"
+                        className="block rounded-sm px-2 py-1.5 hover:bg-accent"
+                        onClick={closeMobileMenu}
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  )}
+                </nav>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
