@@ -137,7 +137,7 @@ export default function BlogPage() {
             <div className="mb-12">
               <Badge
                 variant="outline"
-                className="mb-4 bg-orange-100 text-orange-600 border-orange-200"
+                className="mb-4 bg-blue-100 text-blue-600 border-blue-200"
               >
                 Featured Article
               </Badge>
@@ -164,7 +164,7 @@ export default function BlogPage() {
                     <Calendar className="h-4 w-4" />
                     {formatDate(
                       featuredPosts[0].published_at ||
-                        featuredPosts[0].created_at
+                        featuredPosts[0].created_at,
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function BlogPage() {
                   </div>
                 </div>
                 <Link href={`/blog/${featuredPosts[0].slug}`}>
-                  <Button className="bg-orange-500 hover:bg-orange-600">
+                  <Button className="bg-blue-500 hover:bg-blue-600">
                     Read Article
                   </Button>
                 </Link>
@@ -243,7 +243,7 @@ export default function BlogPage() {
                         <Badge variant="outline" className="mb-3">
                           {post.category}
                         </Badge>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-orange-600 transition-colors line-clamp-2">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
                           {post.title}
                         </h3>
                         <p className="text-gray-600 mb-4 line-clamp-3">

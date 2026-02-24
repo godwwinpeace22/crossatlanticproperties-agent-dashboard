@@ -56,7 +56,7 @@ export default function PropertyTypesPage() {
           (propertyType.description &&
             propertyType.description
               .toLowerCase()
-              .includes(searchTerm.toLowerCase()))
+              .includes(searchTerm.toLowerCase())),
       );
     }
 
@@ -85,7 +85,7 @@ export default function PropertyTypesPage() {
           href={`/property-types/${propertyType.id}`}
           className="group block"
         >
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-sm hover:-translate-y-1">
             <div className="flex">
               <div className="relative w-48 h-32 bg-gray-100 flex-shrink-0">
                 {propertyType.image_url ? (
@@ -115,9 +115,6 @@ export default function PropertyTypesPage() {
                       </p>
                     )}
                   </div>
-                  <Badge variant="secondary" className="ml-4">
-                    Estate Type
-                  </Badge>
                 </div>
               </div>
             </div>
@@ -128,7 +125,7 @@ export default function PropertyTypesPage() {
 
     return (
       <Link href={`/property-types/${propertyType.id}`} className="group block">
-        <div className="bg-white shadow-xl rounded-xl overflow-hidden h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+        <div className="bg-white rounded-xl border overflow-hidden h-full transition-all duration-300 hover:shadow-sm hover:-translate-y-2">
           <div className="relative h-48 bg-gray-100">
             {propertyType.image_url ? (
               <Image

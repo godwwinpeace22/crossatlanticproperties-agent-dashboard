@@ -1,6 +1,8 @@
 "use client";
 
 import type React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import Image from "next/image";
 import { Mail, MapPin, Phone } from "lucide-react";
@@ -14,8 +16,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ContactPage() {
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const router = useRouter();
+  const [contactLoading, setContactLoading] = useState(false);
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [contactStatus, setContactStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [supportStatus, setSupportStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setContactStatus(null);
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
 
@@ -26,23 +41,49 @@ export default function ContactPage() {
     const interest = formData.get("interest") as string;
     const message = formData.get("message") as string;
 
-    const subject = `Contact Form - ${interest || "General Inquiry"}`;
-    const body = `Name: ${firstName} ${lastName}
-Email: ${email}
-Phone: ${phone || "Not provided"}
-Interest: ${interest}
+    try {
+      setContactLoading(true);
 
-Message:
-${message}`;
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          formType: "contact",
+          firstName,
+          lastName,
+          email,
+          phone,
+          interest,
+          message,
+        }),
+      });
 
-    const mailtoLink = `mailto:info@crossatlanticproperties.com?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoLink;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Failed to send message");
+      }
+
+      form.reset();
+      router.push("/contact/success?type=contact");
+    } catch (error) {
+      setContactStatus({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to send message at the moment.",
+      });
+    } finally {
+      setContactLoading(false);
+    }
   };
 
-  const handleSupportSubmit = (e: React.FormEvent) => {
+  const handleSupportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSupportStatus(null);
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
 
@@ -51,18 +92,42 @@ ${message}`;
     const subject = formData.get("support-subject") as string;
     const details = formData.get("support-details") as string;
 
-    const emailSubject = `Support Request - ${category}: ${subject}`;
-    const body = `From: ${email}
-Category: ${category}
-Subject: ${subject}
+    try {
+      setSupportLoading(true);
 
-Details:
-${details}`;
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          formType: "support",
+          email,
+          category,
+          subject,
+          details,
+        }),
+      });
 
-    const mailtoLink = `mailto:support@crossatlanticproperties.com?subject=${encodeURIComponent(
-      emailSubject
-    )}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoLink;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Failed to submit support request");
+      }
+
+      form.reset();
+      router.push("/contact/success?type=support");
+    } catch (error) {
+      setSupportStatus({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to submit support request right now.",
+      });
+    } finally {
+      setSupportLoading(false);
+    }
   };
 
   return (
@@ -97,7 +162,7 @@ ${details}`;
                   </p>
                 </div>
                 <div className="grid gap-6">
-                  <Card>
+                  <Card className="shadow-none border">
                     <CardContent className="p-6 flex items-start gap-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white">
                         <MapPin className="h-6 w-6" />
@@ -114,7 +179,7 @@ ${details}`;
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className="shadow-none border">
                     <CardContent className="p-6 flex items-start gap-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white">
                         <Mail className="h-6 w-6" />
@@ -131,7 +196,7 @@ ${details}`;
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className="shadow-none border">
                     <CardContent className="p-6 flex items-start gap-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white">
                         <Phone className="h-6 w-6" />
@@ -139,7 +204,7 @@ ${details}`;
                       <div>
                         <h3 className="text-lg font-semibold mb-1">Call Us</h3>
                         <p className="text-muted-foreground">
-                          Main Office: +234 708 611 2909
+                          Main Office: +234 806 158 2043, +234 708 611 2909
                           <br />
                           Customer Support: +44 743 546 8699
                           <br />
@@ -153,99 +218,125 @@ ${details}`;
               <div className="space-y-4">
                 <Tabs defaultValue="contact" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="contact">Contact Form</TabsTrigger>
-                    <TabsTrigger value="support">Support Request</TabsTrigger>
+                    <TabsTrigger
+                      value="contact"
+                      disabled={contactLoading || supportLoading}
+                    >
+                      Contact Form
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="support"
+                      disabled={contactLoading || supportLoading}
+                    >
+                      Support Request
+                    </TabsTrigger>
                   </TabsList>
                   <TabsContent
                     value="contact"
                     className="p-4 border rounded-md mt-2"
                   >
                     <form onSubmit={handleContactSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <fieldset
+                        disabled={contactLoading}
+                        className="space-y-4 disabled:opacity-70"
+                      >
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="first-name">First name</Label>
+                            <Input
+                              id="first-name"
+                              name="first-name"
+                              placeholder="John"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="last-name">Last name</Label>
+                            <Input
+                              id="last-name"
+                              name="last-name"
+                              placeholder="Doe"
+                              required
+                            />
+                          </div>
+                        </div>
                         <div className="space-y-2">
-                          <Label htmlFor="first-name">First name</Label>
+                          <Label htmlFor="email">Email</Label>
                           <Input
-                            id="first-name"
-                            name="first-name"
-                            placeholder="John"
+                            id="email"
+                            name="email"
+                            placeholder="johndoe@example.com"
+                            type="email"
                             required
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="last-name">Last name</Label>
+                          <Label htmlFor="phone">Phone (optional)</Label>
                           <Input
-                            id="last-name"
-                            name="last-name"
-                            placeholder="Doe"
+                            id="phone"
+                            name="phone"
+                            placeholder="+1 (555) 000-0000"
+                            type="tel"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>I am interested in:</Label>
+                          <RadioGroup
+                            name="interest"
+                            defaultValue="buying"
+                            className="flex flex-col space-y-1"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="buying" id="buying" />
+                              <Label htmlFor="buying" className="font-normal">
+                                Buying property
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="selling" id="selling" />
+                              <Label htmlFor="selling" className="font-normal">
+                                Selling property
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="renting" id="renting" />
+                              <Label htmlFor="renting" className="font-normal">
+                                Renting property
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="other" id="other" />
+                              <Label htmlFor="other" className="font-normal">
+                                Other inquiry
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="message">Message</Label>
+                          <Textarea
+                            id="message"
+                            name="message"
+                            placeholder="Please let us know how we can help you..."
+                            className="min-h-[120px]"
                             required
                           />
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          placeholder="johndoe@example.com"
-                          type="email"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone (optional)</Label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          placeholder="+1 (555) 000-0000"
-                          type="tel"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>I am interested in:</Label>
-                        <RadioGroup
-                          name="interest"
-                          defaultValue="buying"
-                          className="flex flex-col space-y-1"
+                        <Button type="submit" className="w-full">
+                          {contactLoading ? "Sending..." : "Send Message"}
+                        </Button>
+                      </fieldset>
+                      {contactStatus && (
+                        <p
+                          className={`text-sm ${
+                            contactStatus.type === "success"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
                         >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="buying" id="buying" />
-                            <Label htmlFor="buying" className="font-normal">
-                              Buying property
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="selling" id="selling" />
-                            <Label htmlFor="selling" className="font-normal">
-                              Selling property
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="renting" id="renting" />
-                            <Label htmlFor="renting" className="font-normal">
-                              Renting property
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="other" id="other" />
-                            <Label htmlFor="other" className="font-normal">
-                              Other inquiry
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="message">Message</Label>
-                        <Textarea
-                          id="message"
-                          name="message"
-                          placeholder="Please let us know how we can help you..."
-                          className="min-h-[120px]"
-                          required
-                        />
-                      </div>
-                      <Button type="submit" className="w-full">
-                        Send Message
-                      </Button>
+                          {contactStatus.message}
+                        </p>
+                      )}
                     </form>
                   </TabsContent>
                   <TabsContent
@@ -253,71 +344,99 @@ ${details}`;
                     className="p-4 border rounded-md mt-2"
                   >
                     <form onSubmit={handleSupportSubmit} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="support-email">Email</Label>
-                        <Input
-                          id="support-email"
-                          name="support-email"
-                          placeholder="johndoe@example.com"
-                          type="email"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="support-type">Support Category</Label>
-                        <RadioGroup
-                          name="support-type"
-                          defaultValue="technical"
-                          className="flex flex-col space-y-1"
+                      <fieldset
+                        disabled={supportLoading}
+                        className="space-y-4 disabled:opacity-70"
+                      >
+                        <div className="space-y-2">
+                          <Label htmlFor="support-email">Email</Label>
+                          <Input
+                            id="support-email"
+                            name="support-email"
+                            placeholder="johndoe@example.com"
+                            type="email"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="support-type">Support Category</Label>
+                          <RadioGroup
+                            name="support-type"
+                            defaultValue="technical"
+                            className="flex flex-col space-y-1"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="technical"
+                                id="technical"
+                              />
+                              <Label
+                                htmlFor="technical"
+                                className="font-normal"
+                              >
+                                Technical Issue
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="account" id="account" />
+                              <Label htmlFor="account" className="font-normal">
+                                Account Help
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="billing" id="billing" />
+                              <Label htmlFor="billing" className="font-normal">
+                                Billing Question
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="feedback" id="feedback" />
+                              <Label htmlFor="feedback" className="font-normal">
+                                Feedback/Suggestion
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="support-subject">Subject</Label>
+                          <Input
+                            id="support-subject"
+                            name="support-subject"
+                            placeholder="Brief description of your issue"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="support-details">Details</Label>
+                          <Textarea
+                            id="support-details"
+                            name="support-details"
+                            placeholder="Please provide as much detail as possible about your issue..."
+                            className="min-h-[150px]"
+                            required
+                          />
+                        </div>
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          disabled={supportLoading}
                         >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="technical" id="technical" />
-                            <Label htmlFor="technical" className="font-normal">
-                              Technical Issue
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="account" id="account" />
-                            <Label htmlFor="account" className="font-normal">
-                              Account Help
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="billing" id="billing" />
-                            <Label htmlFor="billing" className="font-normal">
-                              Billing Question
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="feedback" id="feedback" />
-                            <Label htmlFor="feedback" className="font-normal">
-                              Feedback/Suggestion
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="support-subject">Subject</Label>
-                        <Input
-                          id="support-subject"
-                          name="support-subject"
-                          placeholder="Brief description of your issue"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="support-details">Details</Label>
-                        <Textarea
-                          id="support-details"
-                          name="support-details"
-                          placeholder="Please provide as much detail as possible about your issue..."
-                          className="min-h-[150px]"
-                          required
-                        />
-                      </div>
-                      <Button type="submit" className="w-full">
-                        Submit Support Request
-                      </Button>
+                          {supportLoading
+                            ? "Submitting..."
+                            : "Submit Support Request"}
+                        </Button>
+                      </fieldset>
+                      {supportStatus && (
+                        <p
+                          className={`text-sm ${
+                            supportStatus.type === "success"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {supportStatus.message}
+                        </p>
+                      )}
                     </form>
                   </TabsContent>
                 </Tabs>

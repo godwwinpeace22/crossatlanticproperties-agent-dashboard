@@ -126,7 +126,7 @@ function AgentRegisterPageContent() {
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <Image
-                src="/logo.png"
+                src="/logo.jpg"
                 alt="Crossatlantic Properties Logo"
                 width={150}
                 height={50}

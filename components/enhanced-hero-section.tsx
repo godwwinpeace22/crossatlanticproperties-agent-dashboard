@@ -171,13 +171,13 @@ export default function EnhancedHeroSection() {
 
       {/* Floating Elements */}
       <div className="absolute inset-0 z-10">
-        <div className="absolute top-20 left-10 w-20 h-20 bg-orange-500/20 rounded-full animate-float" />
+        <div className="absolute top-20 left-10 w-20 h-20 bg-blue-500/20 rounded-full animate-float" />
         <div
           className="absolute top-40 right-20 w-16 h-16 bg-blue-500/20 rounded-full animate-float"
           style={{ animationDelay: "1s" }}
         />
         <div
-          className="absolute bottom-40 left-20 w-12 h-12 bg-orange-500/30 rounded-full animate-float"
+          className="absolute bottom-40 left-20 w-12 h-12 bg-blue-400/30 rounded-full animate-float"
           style={{ animationDelay: "2s" }}
         />
       </div>
@@ -198,7 +198,7 @@ export default function EnhancedHeroSection() {
                 <h1 className="text-5xl md:text-7xl lg:text-6xl font-display font-bold leading-tight">
                   {lead}
                   {emphasis ? (
-                    <span className="block bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
+                    <span className="block bg-gradient-to-r from-blue-500 to-sky-300 bg-clip-text text-transparent">
                       {emphasis}
                     </span>
                   ) : null}
@@ -263,7 +263,7 @@ export default function EnhancedHeroSection() {
                 {/* Search Button */}
                 <Button
                   onClick={handleSearch}
-                  className="bg-orange-500 hover:bg-orange-600 text-white shadow-xl px-8 rounded-xl font-semibold transition-all duration-200 hover:scale-105 lg:w-auto w-full"
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-xl px-8 rounded-xl font-semibold transition-all duration-200 hover:scale-105 lg:w-auto w-full"
                 >
                   {/* <Search className="mr-2 h-5 w-5" /> */}
                   <span className="hidden sm:inline">Search Properties</span>

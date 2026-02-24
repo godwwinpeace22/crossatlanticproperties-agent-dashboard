@@ -152,7 +152,7 @@ export default function LoginPage() {
           <CardHeader className="space-y-1 px-4 text-center sm:px-6">
             <div className="flex justify-center mb-4">
               <Image
-                src="/logo.png"
+                src="/logo.jpg"
                 alt="Crossatlantic Properties Logo"
                 width={150}
                 height={50}

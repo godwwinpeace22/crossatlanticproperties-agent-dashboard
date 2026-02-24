@@ -68,7 +68,7 @@ export function PropertyTypesShowcase() {
   const hasMoreItems = propertyTypes.length > visibleCount;
 
   return (
-    <section className="section-padding bg-gradient-to-br from-green-500/5 to-blue-500/5">
+    <section className="section-padding bg-">
       <div className="container-custom">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-6xl font-display font-bold mb-6">
@@ -87,7 +87,7 @@ export function PropertyTypesShowcase() {
               href={`/property-types/${propertyType.id}`}
               className="group"
             >
-              <div className="bg-white shadow-xl rounded-xl overflow-hidden h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+              <div className="border rounded-xl overflow-hidden h-full transition-all duration-300 hover:shadow-sm hover:-translate-y-2">
                 <div className="relative h-48 bg-gray-100">
                   {propertyType.image_url ? (
                     <Image
@@ -105,7 +105,7 @@ export function PropertyTypesShowcase() {
                   )}
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 text-gray-900 group-hover:text-dnx-blue transition-colors duration-300">
+                  <h3 className="text-xl font-bold mb-2 text-blue-900 group-hover:text-dnx-blue transition-colors duration-300">
                     {propertyType.name}
                   </h3>
                   {propertyType.description && (

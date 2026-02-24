@@ -353,15 +353,14 @@ export default function PropertiesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-orange-500 to-orange-100 text-white py-16">
+      <section className="bg-slate-900 text-white py-16">
         <div className="container-custom">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-display font-bold mb-4">
               Find Your Perfect Property
             </h1>
             <p className="text-xl opacity-90 max-w-2xl mx-auto">
-              Discover premium properties across Africa with our advanced search
-              technology
+              Discover properties across Nigeria
             </p>
           </div>
         </div>
@@ -370,11 +369,6 @@ export default function PropertiesPage() {
       {/* Category Pills */}
       <section className="bg-white py-6 border-b">
         <div className="container-custom">
-          <div className="text-center mb-6">
-            <p className="text-gray-600">
-              Discover our handpicked selection of premium properties
-            </p>
-          </div>
           <div className="flex flex-wrap justify-center gap-3">
             {PROPERTY_CATEGORIES.slice(1).map((category) => (
               <Button
@@ -397,7 +391,7 @@ export default function PropertiesPage() {
       <div className="container-custom py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Filters */}
-          <div className="lg:w-80 bg-white rounded-lg shadow-sm border border-gray-200 h-fit">
+          <div className="lg:w-80 bg-white rounded-lg shadow- border border-gray-200 h-fit">
             <div className="p-6">
               <div className="flex items-center gap-2 mb-6">
                 <SlidersHorizontal className="h-5 w-5 text-gray-600" />

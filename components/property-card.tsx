@@ -58,7 +58,7 @@ export function PropertyCard({
 
   return (
     <div
-      className={`property-card bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+      className={`property-card bg-white rounded-lg shado border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-300 ${
         isListView ? "flex" : ""
       }`}
     >
@@ -121,7 +121,7 @@ export function PropertyCard({
       <div className={`p-6 ${isListView ? "flex-1" : ""}`}>
         <div className="mb-3">
           <Link href={`/properties/${property.id}`}>
-            <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mb-2 hover:text-blue-600 transition-colors">
+            <h3 className="text-lg font-semibold line-clamp-2 mb-2 hover:text-blue-600 transition-colors">
               {property.title}
             </h3>
           </Link>
@@ -133,7 +133,7 @@ export function PropertyCard({
                 <div className="text-sm text-gray-500 line-through">
                   {formatPrice(
                     property.original_price || property.price,
-                    property.purpose
+                    property.purpose,
                   )}
                 </div>
                 <div className="text-xl font-bold text-red-600">
@@ -145,17 +145,17 @@ export function PropertyCard({
                       (((property.original_price || property.price) -
                         property.promotional_price) /
                         (property.original_price || property.price)) *
-                        100
+                        100,
                     )}
                     %
                   </span>
                 </div>
               </div>
             ) : (
-              <div className="text-xl font-bold text-blue-600">
+              <div className="text-xl font-bold text-gray-900">
                 {formatPrice(
                   property.original_price || property.price,
-                  property.purpose
+                  property.purpose,
                 )}
               </div>
             )}
